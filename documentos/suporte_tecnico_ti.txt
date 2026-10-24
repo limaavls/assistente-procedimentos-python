@@ -1,0 +1,60 @@
+DOCUMENTO FICTÍCIO — SOMENTE PARA ESTUDO E TESTES
+As regras, os prazos e os exemplos abaixo foram inventados para um projeto de Python.
+Não representam procedimentos da Prefeitura ou de qualquer instituição real.
+Identificador: DEMO-TI-001 | Versão didática: 1.0
+Procedimento: abertura e acompanhamento de chamado de suporte técnico.
+
+OBJETIVO
+Organizar a solicitação de suporte para problemas de computador, impressora,
+conexão de rede, acesso a sistemas e recuperação de senha.
+O setor responsável pelo atendimento é a Tecnologia da Informação (TI).
+
+COMO SOLICITAR SUPORTE
+Registrar um chamado no formulário interno fictício SUP-01.
+O formulário gera um número de acompanhamento para consultar a situação do pedido.
+Este exemplo não disponibiliza endereço de portal, telefone ou serviço de atendimento real.
+
+DADOS DO CHAMADO
+Informar o setor, o código de identificação do equipamento e o tipo de problema.
+Descrever a mensagem de erro, quando o problema começou e o impacto no trabalho.
+Indicar se a falha afeta apenas uma pessoa, um setor inteiro ou todos os setores.
+Uma captura de tela pode ser anexada somente depois de ocultar informações sensíveis.
+
+PROTEÇÃO DAS INFORMAÇÕES
+Não enviar senha, código de autenticação, token ou conteúdo confidencial no chamado.
+Na solicitação de recuperação de senha, informar apenas o identificador de teste da conta.
+A equipe de TI deve seguir uma verificação de identidade antes de liberar a recuperação.
+
+CLASSIFICAÇÃO E PRAZOS DE PRIMEIRO RETORNO
+Neste cenário fictício, a prioridade crítica corresponde à indisponibilidade geral
+de um sistema e recebe primeiro retorno em até 1 hora útil.
+A prioridade comum corresponde a uma dificuldade individual e recebe primeiro retorno
+em até 4 horas úteis. A equipe de TI confirma a classificação após avaliar o impacto.
+
+HORÁRIO DE CONTAGEM DOS PRAZOS
+Para estes testes, o atendimento ocorre de segunda a sexta-feira, das 08h às 17h.
+Fins de semana e feriados não entram na contagem das horas úteis.
+Os prazos indicados são para o primeiro retorno, não para a solução definitiva.
+O documento não estabelece uma data de conclusão para cada tipo de falha.
+
+PROBLEMAS COM IMPRESSORA
+Para um chamado sobre impressora, informar o código do equipamento e a mensagem exibida.
+Registrar se a falha ocorre em todos os trabalhos ou somente em um arquivo.
+Não desmontar o equipamento nem instalar programas de origem desconhecida.
+
+ACOMPANHAMENTO E ENCERRAMENTO
+Consultar o mesmo número de chamado para acompanhar respostas e fornecer informações.
+Evitar solicitações duplicadas sobre a mesma ocorrência.
+O chamado é encerrado depois de registrada a solução e confirmada a recuperação do acesso
+ou do funcionamento pela pessoa solicitante.
+
+EXEMPLO FICTÍCIO
+O computador EQ-014 não consegue enviar arquivos para a impressora IMP-002.
+A pessoa solicitante registra o setor, os códigos e a mensagem de erro, sem anexar senhas.
+Como a falha afeta uma única pessoa, o chamado começa como prioridade comum,
+sujeita à confirmação da equipe de TI.
+
+INFORMAÇÕES NÃO DEFINIDAS NESTE DOCUMENTO
+Este procedimento não informa custo de conserto, marcas de equipamentos recomendadas
+ou prazo garantido para substituir um computador. Esses dados não devem ser inventados
+em uma resposta baseada neste arquivo.

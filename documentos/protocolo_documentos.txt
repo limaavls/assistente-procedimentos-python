@@ -1,0 +1,58 @@
+DOCUMENTO FICTÍCIO — SOMENTE PARA ESTUDO E TESTES
+As regras, os prazos e os exemplos abaixo foram inventados para um projeto de Python.
+Não representam procedimentos da Prefeitura ou de qualquer instituição real.
+Identificador: DEMO-PRO-001 | Versão didática: 1.0
+Procedimento: protocolo, digitalização e encaminhamento de documentos.
+
+OBJETIVO
+Registrar a entrada de um documento, conferir as informações mínimas e encaminhá-lo
+ao setor de destino. O número de protocolo permite acompanhar o andamento do registro.
+O setor responsável pela entrada e pelo encaminhamento é o Protocolo Administrativo.
+
+DADOS OBRIGATÓRIOS
+Para solicitar o protocolo, informar o tipo de documento, o assunto, o setor de origem,
+o setor de destino e a data do recebimento.
+Conferir se os anexos citados no texto foram entregues e se as páginas estão legíveis.
+Nos testes, utilizar apenas códigos e documentos fictícios, sem dados de pessoas reais.
+
+CONFERÊNCIA DE PENDÊNCIAS
+Um documento sem setor de destino ou com anexo ausente fica na situação pendente.
+Registrar qual informação precisa ser complementada e comunicar a origem da solicitação.
+O documento não deve ser encaminhado como completo enquanto a pendência permanecer.
+
+PRAZO PARA REGISTRAR
+Neste exemplo fictício, o registro deve ser feito em até 1 dia útil após o recebimento
+da documentação completa e legível. Documentação incompleta aguarda complementação
+antes do início desse prazo.
+
+PRAZO PARA ENCAMINHAR
+Depois do registro, o encaminhamento ao setor de destino ocorre em até 2 dias úteis.
+O histórico deve informar a data de encaminhamento e o setor que recebeu o documento.
+Esse prazo não corresponde ao prazo de resposta do setor de destino.
+O prazo de resposta final não é definido neste procedimento.
+
+DIGITALIZAÇÃO E NOME DO ARQUIVO
+Quando houver digitalização, conferir todas as páginas antes de salvar a cópia.
+Neste cenário, a cópia digital é organizada em PDF com o padrão DEMO-0001_assunto.pdf.
+O arquivo de origem deve ser preservado; a digitalização não autoriza seu descarte.
+Esta regra descreve o procedimento fictício, não os formatos que o aplicativo consegue ler.
+
+ACOMPANHAMENTO
+Informar o número de protocolo para consultar o andamento da solicitação.
+As situações previstas são: pendente, registrado, encaminhado e concluído.
+Uma conclusão deve conter a referência da resposta e a data de encerramento.
+
+CORREÇÃO DO REGISTRO
+Se houver erro no assunto ou no destino, registrar uma correção vinculada ao mesmo protocolo.
+Manter o histórico original e descrever o motivo da alteração.
+Não apagar o registro anterior nem criar outro número para esconder a correção.
+
+EXEMPLO FICTÍCIO
+O documento DEMO-0001 chega com um anexo citado, mas não entregue.
+O setor de Protocolo registra a pendência e solicita o anexo à origem.
+Após receber a documentação completa, registra a entrada e encaminha ao destino informado.
+
+INFORMAÇÕES NÃO DEFINIDAS NESTE DOCUMENTO
+Este procedimento não informa o valor de taxa de emissão, a cobrança de segunda via
+ou os prazos de guarda e descarte de documentos. Uma consulta sobre esses temas deve
+indicar que a informação não está disponível neste arquivo.

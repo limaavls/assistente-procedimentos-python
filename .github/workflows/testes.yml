@@ -24,4 +24,4 @@ jobs:
           python-version: "3.13"
 
       - name: Executar testes
-        run: python -m unittest -v test_app
+        run: python -m unittest discover -v

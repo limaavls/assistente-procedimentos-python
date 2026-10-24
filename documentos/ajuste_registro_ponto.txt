@@ -1,0 +1,61 @@
+DOCUMENTO FICTÍCIO — SOMENTE PARA ESTUDO E TESTES
+As regras, os prazos e os exemplos abaixo foram inventados para um projeto de Python.
+Não representam procedimentos da Prefeitura ou de qualquer instituição real.
+Identificador: DEMO-RH-001 | Versão didática: 1.0
+Procedimento: ajuste do registro de ponto e conferência de frequência.
+
+OBJETIVO
+Orientar a solicitação de correção de uma marcação de entrada ou saída no registro de ponto.
+O ajuste é usado quando uma marcação está ausente ou apresenta um horário incorreto.
+
+RESPONSÁVEIS
+A pessoa solicitante informa a ocorrência e confere os dados apresentados.
+A chefia imediata valida a ocorrência antes de encaminhar o pedido.
+O setor de Recursos Humanos (RH) analisa a solicitação e registra a decisão.
+
+DADOS NECESSÁRIOS
+Para solicitar o ajuste, preencher o formulário fictício AJ-01 com:
+- Identificação interna da pessoa solicitante, utilizando um código em vez de nome real.
+- Setor de trabalho e data da ocorrência.
+- Tipo de marcação: entrada ou saída.
+- Horário registrado, quando existir, e horário solicitado.
+- Justificativa objetiva e validação da chefia imediata.
+
+PRAZO PARA SOLICITAR O AJUSTE
+Neste cenário de teste, a solicitação deve ser apresentada em até 2 dias úteis
+após a identificação da inconsistência. Não se trata de uma regra trabalhista real.
+Uma solicitação fora desse prazo é encaminhada à chefia para avaliação individual.
+
+PRAZO DE ANÁLISE DO RH
+O primeiro retorno do RH ocorre em até 3 dias úteis após o recebimento dos dados
+completos e da validação da chefia. Esse prazo não garante a aprovação do ajuste.
+Se faltar informação, o pedido é devolvido e o prazo recomeça após o envio completo.
+
+ETAPAS DO PROCEDIMENTO
+1. Conferir o extrato de frequência e identificar a marcação que precisa de correção.
+2. Preencher o formulário AJ-01 e encaminhar para validação da chefia.
+3. Enviar o pedido validado ao RH.
+4. Aguardar a análise e acompanhar a situação da solicitação.
+5. Após a aprovação, conferir se a alteração aparece no extrato de frequência.
+
+SITUAÇÕES POSSÍVEIS
+Recebida: a solicitação entrou na fila de atendimento.
+Aguardando validação: a chefia ainda precisa conferir a ocorrência.
+Em análise: o RH está verificando os dados.
+Aprovada: o ajuste foi autorizado e deve ser conferido no extrato atualizado.
+Devolvida: é necessário complementar informações antes de uma nova análise.
+
+CORREÇÃO E HISTÓRICO
+A alteração aprovada deve preservar a marcação original no histórico do sistema.
+Não apagar registros anteriores nem alterar horários de outra pessoa.
+Se a solicitação for devolvida, complementar o mesmo pedido, sem abrir uma duplicata.
+
+EXEMPLO FICTÍCIO
+A pessoa identificada como COL-001 percebeu que a entrada das 08h05 não foi registrada.
+Ela informa o setor, a data, o horário solicitado e a justificativa no formulário AJ-01.
+A chefia valida a ocorrência e o RH analisa o pedido antes de qualquer alteração.
+
+INFORMAÇÕES NÃO DEFINIDAS NESTE DOCUMENTO
+Este procedimento não informa valores de desconto salarial, cálculo de horas extras,
+regras de férias ou datas de fechamento da folha. Uma consulta sobre esses assuntos
+não pode ser respondida com base neste documento.

@@ -2,13 +2,8 @@ from pathlib import Path
 
 import streamlit as st
 
-from app import (
-    TAMANHO_MINIMO_DO_TERMO,
-    carregar_documentos,
-    normalizar,
-    trechos_com_termo,
-)
-
+from app import carregar_documentos
+from busca import buscar_por_pergunta, extrair_palavras
 
 # Configura e apresenta a tela.
 st.set_page_config(
@@ -38,38 +33,46 @@ st.caption(f"Documentos carregados: {len(documentos)}")
 # Cria o campo de pesquisa e o botão.
 with st.form("formulario_busca"):
     termo = st.text_input(
-        "Digite uma palavra ou expressão presente nos documentos:",
-        placeholder="Ex.: material, solicitação ou RH",
+        "Digite uma pergunta ou palavra-chave:",
+        placeholder="Ex.: Como solicitar material?",
     )
     pesquisar = st.form_submit_button("Pesquisar")
 
 # Executa a busca quando o formulário é enviado.
 if pesquisar:
     termo = termo.strip()
+    palavras = extrair_palavras(termo)
 
-    if len(normalizar(termo)) < TAMANHO_MINIMO_DO_TERMO:
+    if not palavras:
         st.warning(
-            f"Digite pelo menos {TAMANHO_MINIMO_DO_TERMO} caracteres."
+            "Digite uma palavra específica, como material ou RH."
         )
         st.stop()
 
-    resultados = []
-
-    for arquivo, texto in documentos:
-        trechos = trechos_com_termo(texto, termo)
-
-        if trechos:
-            resultados.append((arquivo, texto, trechos))
+    resultados = buscar_por_pergunta(documentos, termo)
 
     if not resultados:
-        st.info("Não localizei esse termo nos documentos carregados.")
+        st.info(
+            "Não encontrei documentos com as palavras da sua pesquisa."
+        )
         st.stop()
 
-    st.success(f"Documentos com correspondência: {len(resultados)}")
+    st.info(f"Documentos candidatos: {len(resultados)}")
 
-    # Mostra os trechos e permite conferir o documento inteiro.
+    st.caption(
+        "Resultados ordenados por palavras em comum. "
+        "Encontrar um documento não garante que ele responda à pergunta."
+    )
+
     for arquivo, texto, trechos in resultados:
         st.subheader(f"Fonte: {arquivo.name}")
+
+        palavras_encontradas = palavras & extrair_palavras(texto)
+
+        st.caption(
+            "Palavras encontradas: "
+            + ", ".join(sorted(palavras_encontradas))
+        )
 
         for numero, trecho in enumerate(trechos, start=1):
             st.caption(f"Trecho {numero}")
