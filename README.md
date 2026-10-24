@@ -37,3 +37,24 @@ Ainda não utiliza IA e não interpreta perguntas ou sinônimos.
 
 Todos os documentos publicados são fictícios.
 Este projeto não representa procedimentos oficiais de uma instituição.
+
+## Testes automatizados
+
+O projeto utiliza unittest, disponível na biblioteca padrão do Python.
+
+Para executar os testes, use na pasta principal:
+
+`python -m unittest -v test_app`
+
+As sete verificações atuais cobrem:
+
+- Normalização de acentos e maiúsculas.
+- Busca sem acento.
+- Busca com letras maiúsculas.
+- Rejeição de correspondências parciais de palavras.
+- Termo inexistente.
+- Documento vazio.
+- União de trechos sobrepostos sem repetir linhas.
+
+Os testes atuais não cobrem a leitura dos arquivos
+nem a interação pelo terminal.
