@@ -58,3 +58,19 @@ As sete verificações atuais cobrem:
 
 Os testes atuais não cobrem a leitura dos arquivos
 nem a interação pelo terminal.
+
+## Verificação automática no GitHub
+
+O projeto inclui uma configuração do GitHub Actions
+para executar os testes a cada atualização enviada
+ao repositório.
+
+A automação prepara o Python e executa:
+
+`python -m unittest -v test_app`
+
+Os resultados podem ser consultados na aba Actions.
+
+Essa verificação cobre os testes existentes de busca
+e normalização. Ela não garante que todas as funcionalidades
+do projeto estejam livres de erros.
