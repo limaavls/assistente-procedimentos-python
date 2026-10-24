@@ -1,0 +1,15 @@
+DOCUMENTO FICTÍCIO — SOMENTE PARA ESTUDO
+
+Procedimento: solicitação de material
+Versão didática: 1.0
+
+Para solicitar material, registre:
+- O setor solicitante.
+- A descrição do item.
+- A quantidade desejada.
+- A justificativa da solicitação.
+
+Encaminhe o pedido para conferência do setor responsável.
+
+Este exemplo não representa uma regra da Prefeitura
+ou de outra instituição.
