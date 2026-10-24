@@ -1,31 +1,52 @@
 # Assistente de Procedimentos Administrativos
 
-Aplicação em Python com interface web desenvolvida em Streamlit para pesquisar procedimentos administrativos, visualizar trechos relevantes e consultar os documentos de origem.
+Aplicação em Python com interface web em Streamlit para pesquisar procedimentos administrativos, visualizar trechos relevantes e consultar os documentos de origem.
 
-O usuário pode fazer a pesquisa diretamente pelo navegador, sem precisar utilizar comandos no terminal a cada consulta.
+O projeto também possui uma integração experimental com a Gemini API para gerar respostas a partir dos trechos encontrados. A consulta com IA está implementada pelo terminal, e sua integração à interface está em andamento.
 
-O projeto aplica programação a uma necessidade da rotina administrativa: localizar informações em documentos de maneira organizada e conferir a origem de cada orientação.
+A proposta é aplicar programação a uma necessidade da rotina administrativa: localizar informações em documentos de maneira organizada e conferir a origem de cada orientação.
 
-> Projeto de estudo e portfólio. A interface web e a busca em documentos já estão implementadas. Os documentos de demonstração são fictícios e não representam orientações oficiais de uma instituição.
+> Projeto de estudo e portfólio. Os documentos de demonstração são fictícios e não representam procedimentos oficiais de uma instituição.
 
-## Interface web — implementada
+## Objetivo
 
-A interface está no arquivo `interface.py` e utiliza Streamlit.
+Desenvolver uma ferramenta de apoio à consulta de procedimentos e praticar Python em um problema relacionado ao trabalho administrativo.
 
-Pela tela, o usuário pode:
+O desenvolvimento reúne leitura de arquivos, pesquisa de textos, interface web, integração com API de IA, testes automatizados e controle de versões.
 
-- Digitar uma pergunta ou palavra-chave.
-- Realizar a consulta pelo botão `Pesquisar`.
-- Visualizar a quantidade de documentos carregados e encontrados.
-- Consultar os nomes dos arquivos e as palavras que corresponderam à pesquisa.
-- Ler os parágrafos encontrados.
-- Expandir a opção `Ver documento completo` para conferir a fonte integral.
+O programa não aprova solicitações, não executa procedimentos administrativos e não substitui a conferência das orientações oficiais.
 
-Os documentos são apresentados conforme a quantidade de palavras da pesquisa encontradas em cada arquivo.
+## Estado do projeto
 
-Essa ordenação ajuda a localizar fontes candidatas, mas não garante que elas contenham uma resposta completa.
+| Recurso | Situação |
+| --- | --- |
+| Interface web com Streamlit | Implementada. |
+| Pesquisa de perguntas e palavras-chave | Implementada com comparação textual. |
+| Ordenação dos documentos por palavras em comum | Implementada. |
+| Exibição de parágrafos e arquivos de origem | Implementada. |
+| Consulta ao documento completo pela interface | Implementada. |
+| Pesquisa literal pelo terminal | Implementada em `app.py`. |
+| Consulta com Gemini pelo terminal | Implementação experimental em `consulta_ia.py`. |
+| Respostas com Gemini na interface | Etapa de integração e validação em andamento. |
+| Testes automatizados da busca | 13 testes definidos. |
+| Execução automática dos testes | Configurada com GitHub Actions. |
 
-### Fluxo de uso da interface
+Ter uma integração implementada não comprova a qualidade das respostas. A comunicação real com a API e o comportamento da IA precisam ser avaliados separadamente.
+
+## Interface web
+
+A interface existente está em [interface.py](interface.py).
+
+Pelo navegador, o usuário pode digitar uma pergunta ou palavra-chave, clicar em `Pesquisar` e consultar:
+
+- A quantidade de documentos carregados e encontrados.
+- Os nomes dos arquivos e as palavras correspondentes à pesquisa.
+- Os parágrafos recuperados.
+- O conteúdo integral de cada arquivo em `Ver documento completo`.
+
+A busca funciona localmente e não precisa de uma chave de API.
+
+### Fluxo da busca na interface
 
 ```text
 Abrir a aplicação no navegador
@@ -34,145 +55,119 @@ Digitar uma pergunta ou palavra-chave
               ↓
 Clicar em Pesquisar
               ↓
-Conferir os documentos e os trechos encontrados
+Conferir os documentos e os parágrafos encontrados
               ↓
 Abrir o documento completo para verificar a informação
 ```
 
-### Como abrir a interface
+### Evolução em andamento: IA na mesma tela
 
-Com o ambiente virtual e as dependências instalados, execute na pasta principal:
+A etapa de integração acrescenta uma ação separada para gerar uma resposta com Gemini, reutilizando a busca e o módulo `consulta_ia.py`.
 
-```powershell
-.\venv\Scripts\python.exe -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
-```
-
-Abra o endereço informado no terminal.
-
-A interface funciona localmente no navegador. Esse comando não publica a aplicação na internet.
-
-As instruções de instalação estão nas próximas seções deste README.
-
-## Interface e inteligência artificial
-
-A interface web já existe e funciona para consultar os documentos.
-
-Na versão publicada, essa tela utiliza a busca textual: ela encontra e apresenta conteúdo original dos arquivos, sem gerar uma nova resposta com IA.
-
-A consulta experimental com Gemini foi organizada separadamente em `consulta_ia.py`, conforme a etapa de integração descrita neste README. Sua utilização depende da implementação desse módulo, das dependências e da configuração local da API.
-
-Integrar essa consulta à interface é uma evolução posterior. Não será necessário criar outra tela do zero: a proposta é acrescentar a geração de respostas à interface existente.
-
-## Estado do projeto
-
-| Recurso | Situação |
-| --- | --- |
-| Interface web com Streamlit | Implementada em `interface.py`. |
-| Pesquisa de perguntas e palavras-chave pela interface | Implementada com a busca de `busca.py`. |
-| Exibição de trechos e arquivos de origem | Implementada. |
-| Consulta ao documento completo pela tela | Implementada. |
-| Pesquisa literal pelo terminal | Disponível em `app.py`. |
-| Testes automatizados da busca | Organizados em `test_app.py` e `test_busca.py`. |
-| Verificação dos testes no GitHub | Configurada com GitHub Actions. |
-| Consulta experimental com Gemini pelo terminal | Descrita na seção de integração; depende da configuração local e da validação. |
-| Geração de respostas com Gemini na interface | Próxima evolução. |
-
-## Objetivo
-
-Desenvolver uma ferramenta de apoio à consulta de procedimentos e praticar:
-
-- Leitura, tratamento e pesquisa de textos com Python.
-- Organização do código em funções e módulos.
-- Criação de interface com Streamlit.
-- Testes automatizados e controle de versões.
-- Integração experimental com IA, preservando fontes e revisão humana.
-
-O projeto não executa procedimentos administrativos, não aprova solicitações e não substitui a conferência das orientações oficiais.
-
-## Como funciona
-
-### Busca local, sem IA
+O comportamento definido para essa atualização é:
 
 ```text
-Pergunta ou palavra-chave
-           ↓
-Separação e normalização das palavras
-           ↓
-Pesquisa nos arquivos TXT
-           ↓
-Ordenação dos documentos por palavras em comum
-           ↓
-Exibição dos parágrafos encontrados e das fontes
+Pesquisar
+    ↓
+Conferir os documentos candidatos
+    ↓
+Visualizar os trechos selecionados para envio
+    ↓
+Autorizar o envio ao Google
+    ↓
+Clicar em Gerar resposta com IA
+    ↓
+Ler a resposta e conferir as fontes
 ```
 
-Na interface, uma pergunta como:
+Nessa atualização, apenas pesquisar não deve enviar informações ao Gemini. A chamada depende da autorização e do botão específico.
 
-```text
-Como solicitar material?
-```
+A implementação preparada para essa etapa também mantém a resposta durante as interações da sessão e limpa a resposta e a autorização anteriores quando uma nova pesquisa é realizada.
 
-é transformada em palavras de pesquisa. O programa compara essas palavras com os documentos e coloca primeiro os arquivos com mais termos diferentes em comum.
+Essa integração precisa estar presente no `interface.py` utilizado e ser validada antes de ser considerada concluída. Alterar o README não implementa o botão na aplicação.
 
-Essa ordenação não representa uma porcentagem de confiança. Um documento pode conter palavras da pergunta sem apresentar a resposta completa.
+## Como a busca funciona
 
-### Consulta experimental com Gemini
+A lógica está dividida entre [app.py](app.py) e [busca.py](busca.py).
 
-```text
-Pergunta
-    ↓
-Busca local de documentos candidatos
-    ↓
-Seleção de trechos de até três documentos
-    ↓
-Exibição do conteúdo que será enviado
-    ↓
-Confirmação do usuário no terminal
-    ↓
-Envio da pergunta e dos trechos ao Gemini
-    ↓
-Apresentação da resposta para revisão
-```
-
-A integração solicita que o modelo use os trechos fornecidos, indique os arquivos utilizados e reconheça quando uma informação não estiver disponível.
-
-Essas instruções não garantem que a resposta esteja correta. As afirmações e as fontes precisam ser conferidas nos documentos originais.
-
-## Funcionalidades da busca
-
-A leitura considera arquivos `.txt` em UTF-8 diretamente na pasta `documentos`. Arquivos vazios são ignorados, e falhas de leitura são informadas no terminal.
-
-A comparação desconsidera diferenças de maiúsculas, minúsculas e acentos. Por exemplo, uma pesquisa por `solicitacao` pode encontrar `solicitação`.
+Os arquivos TXT são lidos diretamente da pasta `documentos`. Para comparar os textos, o programa normaliza acentos e maiúsculas, sem modificar os documentos originais.
 
 Existem dois modos de pesquisa:
 
 | Modo | Funcionamento |
 | --- | --- |
-| Terminal com `app.py` | Pesquisa uma palavra ou expressão literal e mostra linhas próximas às ocorrências. Trechos sobrepostos são unidos para evitar repetição. |
-| Interface com `interface.py` | Separa a pergunta em palavras, remove alguns termos comuns, ordena os documentos por correspondência e mostra parágrafos completos. |
+| Terminal com `app.py` | Procura uma palavra ou expressão literal e apresenta linhas próximas às ocorrências. |
+| Interface com `busca.py` | Separa a pergunta em palavras, remove alguns termos comuns e ordena os documentos pela quantidade de palavras distintas em comum. |
 
-A interface também permite abrir o conteúdo integral de cada documento encontrado.
+Na busca por perguntas, uma consulta como:
 
-A busca considera palavras completas: `mat` não encontra `material` apenas por ser parte da palavra.
+```text
+Como solicitar material?
+```
 
-## Tecnologias
+é tratada como um conjunto de palavras de pesquisa. Os documentos com mais palavras distintas correspondentes aparecem primeiro.
+
+Essa ordenação não é uma porcentagem de confiança nem uma avaliação do significado do texto.
+
+### Características
+
+- Comparação sem diferenciar acentos e maiúsculas.
+- Pesquisa por palavras completas.
+- Aceitação de termos a partir de dois caracteres.
+- Preservação do texto original nos resultados.
+- Exibição do nome do arquivo de origem.
+- Apresentação de parágrafos completos na busca por perguntas.
+
+Uma pesquisa por `solicitacao` pode encontrar `solicitação`. Já `mat` não encontra `material` apenas por ser parte da palavra.
+
+A busca ainda não reconhece automaticamente sinônimos ou flexões. Por exemplo, `material`, `materiais` e `suprimentos` são termos diferentes.
+
+## Consulta experimental com Gemini
+
+O módulo [consulta_ia.py](consulta_ia.py) utiliza os resultados da busca local para preparar uma consulta à Gemini API.
+
+Pelo terminal, o programa:
+
+1. Recebe uma pergunta.
+2. Localiza documentos candidatos.
+3. Reúne trechos de até três documentos.
+4. Mostra o conteúdo selecionado.
+5. Solicita confirmação antes do envio.
+6. Apresenta a resposta gerada para revisão.
+
+As instruções enviadas ao modelo pedem que ele utilize somente os trechos fornecidos, cite os nomes dos arquivos e reconheça informações ausentes.
+
+Essas instruções não impedem todos os erros. A implementação não valida automaticamente se cada afirmação ou referência está realmente apoiada nos documentos.
+
+### Limites definidos no projeto
+
+| Item | Configuração |
+| --- | --- |
+| Tamanho máximo da pergunta | 500 caracteres. |
+| Quantidade máxima de documentos enviados | 3 documentos. |
+| Tamanho máximo do contexto preparado | 12.000 caracteres. |
+| Conteúdo acima do limite | A consulta é interrompida, sem cortar o texto silenciosamente. |
+| Ausência de documentos ou correspondência | A API não é consultada. |
+| Ausência de chave | O programa informa que a configuração está pendente. |
+| Confirmação pelo terminal | Exige a resposta `SIM` antes do envio. |
+
+Esses limites são escolhas da aplicação, não limites gerais da Gemini API.
+
+## Tecnologias utilizadas
 
 | Tecnologia | Aplicação |
 | --- | --- |
-| Python | Leitura de arquivos, normalização e lógica de busca. |
-| Streamlit | Interface de consulta no navegador. |
-| Gemini API | Geração experimental de respostas a partir de trechos. |
-| google-genai | Biblioteca de acesso à API do Gemini. |
-| python-dotenv | Carregamento da configuração local do arquivo `.env`. |
+| Python | Leitura de arquivos, normalização e pesquisa. |
+| Streamlit | Interface no navegador. |
+| Gemini API | Geração experimental de respostas com base nos trechos. |
+| google-genai | Acesso à API do Gemini. |
+| python-dotenv | Leitura das configurações locais do `.env`. |
 | httpx | Tratamento de falhas de conexão na integração. |
-| unittest | Testes automatizados da lógica de busca. |
+| unittest | Testes automatizados da busca. |
 | Git e GitHub | Controle de versões e publicação do projeto. |
 | GitHub Actions | Execução automática dos testes. |
 
-A busca pelo terminal e os testes atuais utilizam a biblioteca padrão do Python. A interface e a integração com Gemini precisam das dependências adicionais.
-
-## Organização dos arquivos
-
-Estrutura considerada para a etapa com Gemini e os documentos de demonstração:
+## Estrutura principal
 
 ```text
 assistente-procedimentos-python/
@@ -182,11 +177,7 @@ assistente-procedimentos-python/
 │       └── testes.yml
 │
 ├── documentos/
-│   ├── solicitacao_material.txt
-│   ├── teste_busca.txt
-│   ├── ajuste_registro_ponto.txt
-│   ├── suporte_tecnico_ti.txt
-│   └── protocolo_documentos.txt
+│   └── arquivos de demonstração em formato TXT
 │
 ├── .gitignore
 ├── README.md
@@ -199,17 +190,17 @@ assistente-procedimentos-python/
 └── test_busca.py
 ```
 
-Os arquivos locais `.env` e a pasta `venv` não devem ser publicados no GitHub.
+O arquivo `.env` e a pasta `venv` são criados localmente e não devem ser publicados.
 
 | Arquivo | Responsabilidade |
 | --- | --- |
-| `app.py` | Carrega os documentos, normaliza textos e oferece a busca literal pelo terminal. |
-| `busca.py` | Extrai palavras de perguntas e ordena os documentos encontrados. |
-| `interface.py` | Apresenta a busca e os documentos no navegador. |
-| `consulta_ia.py` | Implementa a etapa experimental de consulta ao Gemini pelo terminal. |
-| `test_app.py` | Testa normalização e seleção de trechos. |
-| `test_busca.py` | Testa a pesquisa por palavras extraídas de perguntas. |
-| `requirements.txt` | Relaciona as dependências adicionais. |
+| `app.py` | Carregamento dos documentos, normalização e busca literal pelo terminal. |
+| `busca.py` | Extração de palavras das perguntas e ordenação dos documentos. |
+| `interface.py` | Tela de pesquisa e apresentação dos documentos. |
+| `consulta_ia.py` | Preparação dos trechos e integração experimental com Gemini. |
+| `test_app.py` | Testes de normalização e seleção de trechos. |
+| `test_busca.py` | Testes de pesquisa por palavras extraídas de perguntas. |
+| `requirements.txt` | Dependências adicionais da aplicação. |
 
 ## Instalação no Windows
 
@@ -222,27 +213,27 @@ git clone https://github.com/limaavls/assistente-procedimentos-python.git
 cd assistente-procedimentos-python
 ```
 
-Se já tiver uma cópia no computador, abra essa pasta no Cursor. Não é necessário clonar novamente.
+Se já tiver uma cópia, abra a pasta existente no Cursor. Não é necessário clonar novamente.
 
-Os comandos seguintes devem ser executados no terminal, dentro da pasta principal do projeto.
+Execute os próximos comandos no terminal da pasta principal do projeto.
 
 ### 2. Criar o ambiente virtual
 
-É necessário ter Python instalado. O workflow de testes está configurado para Python 3.13.
+É necessário ter Python instalado. O workflow de testes utiliza Python 3.13.
 
-Crie o ambiente somente se ele ainda não existir:
+Crie o ambiente apenas se ele ainda não existir:
 
 ```powershell
 python -m venv venv
 ```
 
-Os comandos deste README chamam diretamente o Python desse ambiente, sem exigir sua ativação.
+Os comandos deste README chamam diretamente o Python do ambiente, sem exigir ativação separada.
 
-Caso seu ambiente se chame `.venv`, substitua `venv` por `.venv` nos caminhos apresentados.
+Caso seu ambiente se chame `.venv`, substitua `venv` por `.venv` nos caminhos.
 
-### 3. Instalar as dependências
+### 3. Conferir as dependências
 
-Para a etapa que inclui a interface e a consulta com Gemini, o `requirements.txt` deve conter:
+Para executar a etapa completa com interface e Gemini, o `requirements.txt` precisa incluir:
 
 ```text
 streamlit
@@ -251,23 +242,29 @@ python-dotenv
 httpx
 ```
 
-Instale as dependências:
+Preserve outras dependências que estejam sendo utilizadas.
+
+Se sua cópia ainda tiver apenas `streamlit`, acrescente as bibliotecas da integração antes de executar a consulta com IA.
+
+### 4. Instalar as dependências
 
 ```powershell
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-A instalação das bibliotecas não configura a chave de acesso nem realiza uma consulta à IA.
+Instalar as bibliotecas não configura a chave e não realiza uma consulta ao Gemini.
 
 ## Executar a interface
+
+Na pasta principal:
 
 ```powershell
 .\venv\Scripts\python.exe -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
-Abra no navegador o endereço informado no terminal.
+Abra o endereço informado no terminal.
 
-Digite uma palavra ou pergunta, clique em `Pesquisar` e confira os resultados. A opção `Ver documento completo` permite consultar o conteúdo integral de cada fonte.
+Digite uma pergunta ou palavra-chave, clique em `Pesquisar` e confira as fontes. Utilize `Ver documento completo` para consultar o conteúdo integral de cada arquivo.
 
 Exemplos:
 
@@ -279,11 +276,13 @@ RH
 digitalizacao
 ```
 
-Nesta etapa, a interface realiza apenas a busca local. Ela não gera respostas com Gemini e não precisa de uma chave de API.
+Os resultados dependem dos documentos existentes na pasta.
 
-O comando utiliza o endereço local do computador e desativa o envio de estatísticas de uso do Streamlit. Ele não publica a aplicação na internet.
+O comando mantém a aplicação acessível localmente e desativa o envio de estatísticas de uso do Streamlit. Ele não publica a ferramenta na internet.
 
 Para encerrar, pressione `Ctrl + C` no terminal.
+
+Caso a tela ainda apresente somente a busca, isso corresponde à versão anterior à integração visual com Gemini. A consulta com IA pode ser utilizada separadamente pelo terminal.
 
 ## Executar a busca literal pelo terminal
 
@@ -291,37 +290,37 @@ Para encerrar, pressione `Ctrl + C` no terminal.
 .\venv\Scripts\python.exe app.py
 ```
 
-Digite uma palavra ou expressão presente nos documentos, como:
+Digite uma palavra ou expressão, como:
 
 ```text
 material
 ```
 
-Esse modo mantém a pesquisa literal. Não possui a mesma separação de perguntas em palavras utilizada pela interface.
+Esse modo não utiliza IA e mantém a busca literal, sem a separação da pergunta em palavras realizada por `busca.py`.
 
-Para realizar outra pesquisa, execute o comando novamente.
+Para outra pesquisa, execute o comando novamente.
 
-## Configurar a consulta experimental com Gemini
+## Configurar o Gemini
 
-Esta seção corresponde à integração em `consulta_ia.py`, separada da interface Streamlit. Antes de executar, confirme que esse módulo foi adicionado e que as dependências foram instaladas.
+A busca local não exige essa configuração. Ela é necessária somente para gerar respostas com IA.
 
-### 1. Criar uma chave de acesso
+### 1. Obter a chave
 
-Acesse o [Google AI Studio](https://aistudio.google.com/) e utilize a área de chaves de API para criar uma chave no seu projeto.
+Acesse o [Google AI Studio](https://aistudio.google.com/) e utilize a área de chaves de API.
 
-Para desenvolver com a modalidade gratuita, confira se o projeto está no Free Tier e se o modelo escolhido está disponível nesse plano.
+Para utilizar a modalidade gratuita, confira o plano do projeto e a disponibilidade do modelo no Free Tier.
 
-A configuração de referência desta etapa utiliza:
+O modelo configurado nesta etapa é:
 
 ```text
 gemini-3.5-flash-lite
 ```
 
-A disponibilidade, as cotas e as condições de cobrança podem mudar. Confira as informações do seu projeto e a documentação oficial antes de utilizar.
+As condições de disponibilidade, limites e cobrança podem mudar. O programa não verifica o plano de faturamento da conta.
 
-### 2. Proteger a configuração local
+### 2. Conferir o `.gitignore`
 
-Confira se o `.gitignore` contém:
+O arquivo deve conter as regras:
 
 ```gitignore
 .env
@@ -330,7 +329,9 @@ venv/
 __pycache__/
 ```
 
-Verifique a regra do arquivo `.env`:
+Não apague outras regras existentes.
+
+Confira se o `.env` está sendo ignorado:
 
 ```powershell
 git check-ignore -v .env
@@ -342,78 +343,64 @@ Confira também se ele já está sendo acompanhado pelo Git:
 git ls-files -- .env
 ```
 
-O segundo comando não deve listar o arquivo. Se listar, resolva o rastreamento antes de colocar uma chave real nele.
+O segundo comando não deve listar o arquivo.
 
-Adicionar uma regra ao `.gitignore` não remove automaticamente arquivos que já foram registrados no Git.
+Se listar, resolva o rastreamento antes de colocar uma chave real. Uma regra no `.gitignore` não remove automaticamente um arquivo já registrado.
 
-### 3. Criar o arquivo `.env`
+### 3. Criar o `.env`
 
-Na pasta principal, crie um arquivo chamado `.env`:
+Na pasta principal:
 
 ```dotenv
 GEMINI_API_KEY=COLE_SUA_CHAVE_AQUI
 GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
-Substitua o exemplo pela chave real somente no arquivo local.
+Substitua o exemplo pela chave real somente nesse arquivo local.
 
-Não coloque a chave no código, no README, em capturas de tela ou em mensagens públicas.
+Não publique a chave no código, no README, em mensagens ou em capturas de tela.
 
-Caso uma chave seja exposta, revogue-a no provedor e crie outra. Apagar o texto da versão atual do arquivo não elimina a exposição anterior.
-
-### 4. Executar a consulta
+### 4. Executar a consulta com IA
 
 ```powershell
 .\venv\Scripts\python.exe consulta_ia.py
 ```
 
-Exemplo de pergunta:
+Exemplo:
 
 ```text
 Quais informações preciso informar para solicitar material?
 ```
 
-O programa mostra os trechos candidatos antes do envio. Com a chave configurada, solicita:
+Leia os trechos exibidos antes de responder à confirmação:
 
 ```text
 Enviar? Digite SIM para continuar:
 ```
 
-Digite `SIM` para autorizar o envio. Outra resposta cancela a consulta.
+Digite `SIM` para enviar. Outra resposta cancela a operação.
 
-A pergunta e os trechos são enviados ao Google. Não utilize dados reais, pessoais ou confidenciais nesta demonstração.
-
-### Regras da implementação experimental
-
-| Configuração | Comportamento |
-| --- | --- |
-| Tamanho da pergunta | Até 500 caracteres. |
-| Documentos selecionados | Até três, conforme a ordenação da busca. |
-| Limite do contexto | Até 12.000 caracteres reunindo fontes e trechos. Acima disso, a consulta é interrompida. |
-| Confirmação | Exigida antes da solicitação à API. |
-| Falta de documentos ou de correspondência | Encerra sem consultar a IA. |
-| Falta de chave | Avisa que a configuração está pendente. |
-| Resposta interrompida ou bloqueada | Não apresenta texto parcial como resposta concluída. |
-
-Os limites de caracteres são escolhas deste projeto, não limites gerais da Gemini API.
-
-As instruções solicitam referências no formato `[arquivo.txt]`, mas a implementação ainda não valida automaticamente se cada afirmação está apoiada na fonte citada.
+Compare a resposta com os trechos e com o documento completo. Uma referência como `[arquivo.txt]` não comprova, sozinha, que a informação está correta.
 
 ## Documentos de demonstração
 
-| Arquivo | Conteúdo fictício |
+Foram preparados os seguintes arquivos fictícios para os testes:
+
+| Arquivo | Tema |
 | --- | --- |
 | `solicitacao_material.txt` | Informações necessárias para solicitar materiais. |
-| `teste_busca.txt` | Texto curto para testar acentos, siglas e ocorrências próximas. |
-| `ajuste_registro_ponto.txt` | Solicitação de correção do ponto e encaminhamento ao RH. |
-| `suporte_tecnico_ti.txt` | Abertura de chamados e informações para atendimento de TI. |
+| `teste_busca.txt` | Acentos, siglas e ocorrências próximas. |
+| `ajuste_registro_ponto.txt` | Correção do ponto e encaminhamento ao RH. |
+| `suporte_tecnico_ti.txt` | Abertura e acompanhamento de chamados de TI. |
 | `protocolo_documentos.txt` | Conferência, digitalização e encaminhamento de documentos. |
 
-Os arquivos precisam estar diretamente em `documentos` para participar das pesquisas. Os nomes listados no README, por si só, não cadastram documentos.
+Cada arquivo precisa estar diretamente em `documentos` para participar das pesquisas. Listar seu nome no README não o adiciona à base.
 
-Para ampliar a base, salve um novo arquivo `.txt` em UTF-8 nessa pasta. Depois, faça uma nova pesquisa pela interface ou execute novamente o programa pelo terminal.
+Para incluir outro documento, salve um TXT em UTF-8 nessa pasta e realize uma nova pesquisa.
 
-A leitura atual não percorre subpastas nem abre arquivos ZIP, PDF, DOCX ou imagens.
+A leitura atual não percorre subpastas e não abre ZIP, PDF, DOCX ou imagens. Arquivos vazios são ignorados; falhas de leitura aparecem no terminal.
+
+Todos os procedimentos, prazos e situações desses exemplos são fictícios.
 
 ## Testes automatizados
 
@@ -423,16 +410,14 @@ Execute:
 .\venv\Scripts\python.exe -m unittest discover -v
 ```
 
-O comando encontra os arquivos de testes do projeto.
+A suíte definida nesta etapa contém 13 testes:
 
-A suíte desta etapa contém 13 testes:
-
-| Arquivo | Quantidade | Verificações |
+| Arquivo | Quantidade | Cobertura |
 | --- | --- | --- |
-| `test_app.py` | 7 | Normalização, acentos, maiúsculas, palavras completas, ausência de correspondência, texto vazio e união de trechos sobrepostos. |
-| `test_busca.py` | 6 | Extração de palavras, ordenação dos documentos, rejeição de correspondências parciais, perguntas sem termos úteis, preservação de parágrafos e ausência de correspondência. |
+| [test_app.py](test_app.py) | 7 | Normalização, acentos, maiúsculas, palavras completas, ausência de correspondência, texto vazio e união de trechos sobrepostos. |
+| [test_busca.py](test_busca.py) | 6 | Extração de palavras, ordenação, rejeição de correspondências parciais, perguntas sem termos úteis, preservação de parágrafos e ausência de correspondência. |
 
-Mantendo essa suíte, uma execução bem-sucedida deve terminar com:
+Mantendo essa suíte, uma execução bem-sucedida termina com:
 
 ```text
 Ran 13 tests in ...
@@ -440,80 +425,110 @@ Ran 13 tests in ...
 OK
 ```
 
-Esse é o resultado esperado, não um registro de uma execução específica.
+Esse é o resultado esperado, não um registro de execução.
 
-Os testes atuais não fazem chamadas à API e não precisam de uma chave do Gemini. Eles também não validam a interface, a leitura dos arquivos ou a qualidade das respostas geradas pela IA.
+Os testes utilizam textos definidos no próprio código. Não fazem chamadas ao Gemini, não precisam de uma chave e não validam a qualidade das respostas da IA.
+
+A cobertura atual também não inclui o comportamento da interface ou a leitura real dos arquivos.
 
 Adicionar documentos à pasta não cria novos testes automaticamente.
 
-### GitHub Actions
+## GitHub Actions
 
-O workflow em `.github/workflows/testes.yml` executa:
+O workflow [testes.yml](.github/workflows/testes.yml) executa:
 
 ```text
 python -m unittest discover -v
 ```
 
-A configuração utiliza Python 3.13 em um ambiente Linux e permite execução a cada `push` ou manualmente pela aba `Actions`.
+A automação utiliza Python 3.13 em um ambiente Linux. Ela é acionada a cada `push` e também permite execução manual pela aba `Actions`.
 
-Uma execução verde indica que os testes configurados passaram. Não significa que todo o projeto esteja livre de erros nem que a consulta ao Gemini tenha sido validada.
+Uma execução verde indica que os testes configurados passaram. Não comprova que a interface ou a integração real com Gemini tenham sido validadas.
 
-## Verificações manuais sugeridas
+Não é necessário configurar a chave do Gemini no GitHub Actions para a suíte atual.
 
-| Consulta ou ação | O que conferir |
+## Verificações manuais
+
+| Ação | Comportamento esperado |
 | --- | --- |
-| Pesquisar `solicitacao` | Deve localizar a palavra “solicitação”, apesar do acento. |
-| Pesquisar `RH` | Deve encontrar os documentos que contenham essa sigla. |
-| Pesquisar `mat` | Não deve localizar “material” por correspondência parcial. |
-| Perguntar `Como solicitar material?` | Deve apresentar documentos candidatos relacionados às palavras da pergunta. |
-| Perguntar à IA o valor da taxa de segunda via do protocolo | Deve reconhecer que o valor não está informado no documento fictício, sem inventar um preço. |
-| Cancelar a confirmação da consulta com IA | Deve encerrar sem enviar a solicitação ao Gemini. |
+| Pesquisar `solicitacao` | Localizar “solicitação”, apesar da diferença de acento. |
+| Pesquisar `RH` | Encontrar documentos que contenham essa sigla. |
+| Pesquisar `mat` | Não localizar “material” por correspondência parcial. |
+| Perguntar `Como solicitar material?` | Apresentar documentos com palavras correspondentes. |
+| Abrir o documento completo | Permitir conferir informações além do trecho recuperado. |
+| Cancelar a confirmação no terminal | Encerrar sem enviar a consulta ao Gemini. |
+| Perguntar à IA o valor da taxa de segunda via do protocolo | Reconhecer que o valor não está informado no documento fictício. |
 
-Os comportamentos da IA são critérios de avaliação, não resultados garantidos. Registre respostas incorretas ou sem apoio nos documentos para orientar as próximas melhorias.
+Na integração da IA à interface, verificar também:
 
-## Uso gratuito, privacidade e segurança
+- Pesquisar sem acionar a API.
+- Exigir autorização antes do envio.
+- Manter a resposta durante as interações da mesma consulta.
+- Limpar a resposta e a autorização ao iniciar outra pesquisa.
+- Não gerar resposta quando a busca não encontrar trechos.
 
-O modelo de referência possui uma modalidade gratuita sujeita a cotas e condições do Google. O programa não consulta o plano de faturamento da conta nem garante ausência de cobrança.
+Esses comportamentos são critérios de avaliação. Falhas devem ser registradas e corrigidas, não omitidas da demonstração.
 
-Confira o Free Tier, os limites e a disponibilidade do modelo no Google AI Studio. Um erro `429` pode indicar limite atingido ou cota indisponível.
+## Privacidade e segurança
 
-Nos serviços gratuitos, os termos do Google permitem o uso de entradas e respostas para melhoria dos produtos, incluindo possibilidade de revisão humana. Por isso, utilize somente dados fictícios nesta demonstração.
+A busca textual é local. Na consulta com Gemini, a pergunta e os trechos selecionados são enviados ao Google.
 
-Antes de qualquer uso com documentos reais, será necessário avaliar autorização institucional, tratamento dos dados, acesso aos documentos e condições do serviço externo.
+As condições dos serviços gratuitos permitem o uso de entradas e respostas para melhoria dos produtos, com possibilidade de revisão humana. Consulte os termos aplicáveis à sua conta e região.
 
-A configuração atual não oferece autenticação ou controle de acesso para utilização compartilhada.
+Por isso, esta demonstração deve utilizar somente dados fictícios. Não envie documentos internos reais, informações pessoais, registros de ponto reais, senhas ou credenciais.
+
+Antes de uso institucional, será necessário avaliar autorização, tratamento dos dados, permissões e controle de acesso.
+
+O projeto não possui autenticação para uso compartilhado.
+
+Se uma chave for exposta, revogue-a no provedor e crie outra. Apagar o texto da versão atual do arquivo não elimina a exposição anterior.
+
+## Uso gratuito e limites
+
+O modelo de referência possui modalidade gratuita sujeita às condições e cotas do Google.
+
+O código não garante gratuidade nem identifica se a conta está em um plano pago. Confira essas informações no AI Studio antes de utilizar a API.
+
+Um erro `429` pode indicar cota atingida ou indisponível. Erros de autenticação, acesso ou modelo precisam ser investigados na configuração antes de repetir as solicitações.
 
 Referências oficiais:
 
-- [Modelos Gemini](https://ai.google.dev/gemini-api/docs/models)
-- [Preços e Free Tier](https://ai.google.dev/gemini-api/docs/pricing)
+- [Preços e modalidades da Gemini API](https://ai.google.dev/gemini-api/docs/pricing)
 - [Limites de uso](https://ai.google.dev/gemini-api/docs/rate-limits)
 - [Termos da Gemini API](https://ai.google.dev/gemini-api/terms)
+- [Primeiros passos com Gemini](https://ai.google.dev/gemini-api/docs/quickstart)
 
-## Limitações
+## Limitações atuais
 
-A recuperação de documentos é baseada em palavras, não em interpretação de significado. Ela não reconhece automaticamente sinônimos ou flexões, como `material` e `materiais`.
+A seleção dos documentos utiliza palavras, não busca por significado. Pode deixar de encontrar um procedimento que use termos diferentes dos presentes na pergunta.
 
-Encontrar palavras em comum não comprova que o documento responda à pergunta. Da mesma forma, não encontrar um termo não comprova que uma regra não exista.
+Encontrar palavras em comum não comprova que um documento responda à dúvida. Não encontrar um termo também não comprova que uma regra não exista.
 
-A consulta com IA recebe apenas os trechos selecionados. Informações importantes podem ficar de fora, e o modelo pode produzir uma resposta incorreta ou citar uma fonte que não sustente sua afirmação.
+A IA recebe apenas os trechos selecionados, que podem estar incompletos. Ela pode produzir afirmações incorretas, referências inadequadas ou interpretações sem apoio nos textos.
 
-A solução ainda não possui avaliação automática das respostas, validação de citações, controle de versões dos procedimentos ou atualização automática da base.
+A aplicação ainda não possui validação automática das citações, avaliação sistemática das respostas, controle de versões dos procedimentos ou atualização automática de fontes externas.
 
-Os documentos fictícios não devem ser utilizados como orientação administrativa real.
+Não há medição documentada de economia de tempo ou de precisão para uso administrativo real.
 
 ## Próximas melhorias
 
-- Validar a integração real com Gemini e registrar os resultados dos testes manuais.
-- Criar testes da integração usando respostas simuladas, sem consumir a API.
-- Integrar a consulta com IA à interface Streamlit.
-- Avaliar respostas para informações ausentes, documentos conflitantes e fontes insuficientes.
-- Melhorar a seleção de trechos e a verificação das fontes citadas.
-- Acrescentar testes de leitura de arquivos e da interface.
-- Automatizar a atualização da base a partir de documentos aprovados.
-- Avaliar autenticação e controle de acesso antes de um uso institucional.
+- Concluir e validar a integração do Gemini à interface.
+- Criar testes da integração com respostas simuladas, sem consumir a API.
+- Acrescentar testes da interface e da leitura de arquivos.
+- Avaliar respostas com informações ausentes, documentos conflitantes e fontes insuficientes.
+- Melhorar a seleção de trechos e a verificação das citações.
+- Automatizar a atualização da base a partir de fontes aprovadas.
+- Avaliar autenticação e controle de acesso antes de uso compartilhado.
 
-Esses itens são melhorias planejadas, não funcionalidades concluídas.
+Esses itens são objetivos de desenvolvimento, não funcionalidades concluídas.
+
+## Aprendizados demonstrados
+
+O projeto reúne organização de código em módulos, manipulação de textos, leitura de arquivos, tratamento de erros, interface web e integração com um serviço externo.
+
+Os testes e o histórico do Git permitem acompanhar a evolução da solução e verificar parte de seu comportamento a cada alteração.
+
+A proposta do portfólio é demonstrar o funcionamento, explicar as decisões tomadas e apresentar as limitações com clareza.
 
 ## Autor
 
