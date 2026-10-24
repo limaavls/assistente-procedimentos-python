@@ -74,3 +74,47 @@ Os resultados podem ser consultados na aba Actions.
 Essa verificação cobre os testes existentes de busca
 e normalização. Ela não garante que todas as funcionalidades
 do projeto estejam livres de erros.
+
+## Interface no navegador
+
+O projeto possui uma interface com Streamlit para pesquisar
+nos documentos fictícios e visualizar os resultados.
+
+A interface permite:
+
+- Digitar um termo de pesquisa.
+- Visualizar os trechos encontrados e seus arquivos de origem.
+- Abrir o conteúdo completo de cada documento encontrado.
+
+### Como executar no Windows
+
+Caso ainda não exista um ambiente virtual neste projeto:
+
+```powershell
+python -m venv venv
+```
+
+Instale as bibliotecas:
+
+```powershell
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Inicie a interface:
+
+```powershell
+.\venv\Scripts\python.exe -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
+```
+
+Abra o endereço informado no terminal.
+
+### Limitações
+
+A pesquisa continua sendo textual: não interpreta perguntas,
+sinônimos nem o significado dos documentos.
+
+Esta versão não utiliza IA e não possui controle de acesso
+para uso compartilhado em uma instituição.
+
+Os testes automatizados atuais cobrem a lógica da busca,
+não a interface.
