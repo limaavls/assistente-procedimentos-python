@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Uma linha antes e uma depois da ocorrência (até 3 linhas no total).
 LINHAS_DE_CONTEXTO = 1
-TAMANHO_MINIMO_DO_TERMO = 3
+TAMANHO_MINIMO_DO_TERMO = 2
 
 
 def normalizar(texto: str) -> str:
@@ -40,10 +40,10 @@ def padrao_de_palavra(termo: str) -> re.Pattern[str]:
 
 
 def trechos_com_termo(texto: str, termo: str) -> list[str]:
+    """Mostra ocorrências com contexto, sem repetir linhas sobrepostas."""
     padrao = padrao_de_palavra(termo)
     linhas = texto.splitlines()
-    ja_incluido: set[tuple[int, int]] = set()
-    trechos: list[str] = []
+    faixas: list[tuple[int, int]] = []
 
     for indice, linha in enumerate(linhas):
         if not padrao.search(normalizar(linha)):
@@ -51,11 +51,17 @@ def trechos_com_termo(texto: str, termo: str) -> list[str]:
 
         inicio = max(0, indice - LINHAS_DE_CONTEXTO)
         fim = min(len(linhas), indice + LINHAS_DE_CONTEXTO + 1)
-        faixa = (inicio, fim)
-        if faixa in ja_incluido:
-            continue
 
-        ja_incluido.add(faixa)
+        # Junta trechos que compartilham uma ou mais linhas.
+        if faixas and inicio < faixas[-1][1]:
+            inicio_anterior, fim_anterior = faixas[-1]
+            faixas[-1] = (inicio_anterior, max(fim_anterior, fim))
+        else:
+            faixas.append((inicio, fim))
+
+    trechos: list[str] = []
+
+    for inicio, fim in faixas:
         trechos.append("\n".join(linhas[inicio:fim]))
 
     return trechos
