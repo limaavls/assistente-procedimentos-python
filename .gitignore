@@ -225,3 +225,6 @@ __marimo__/
 documentos/importado_*.txt
 
 .cache_modelos/
+
+# Credenciais locais do Google Drive
+.secrets/
