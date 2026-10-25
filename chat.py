@@ -15,33 +15,66 @@ from painel_documentos import mostrar_importacao
 BASE = Path(__file__).resolve().parent
 MAX_TURNOS = 10
 
+# Abre a barra lateral inicialmente.
 st.set_page_config(
     page_title="Conversa sobre procedimentos",
     page_icon="💬",
+    initial_sidebar_state="expanded",
 )
+
 st.title("💬 Conversa sobre procedimentos")
 st.caption(
     "Documentos fictícios. Cada resposta exige autorização de envio."
 )
 
+# Guarda a conversa durante as interações na página.
 estado = st.session_state
 estado.setdefault("chat_historico", [])
 estado.setdefault("chat_pendente", None)
 
-if mostrar_importacao(BASE / "documentos"):
-    estado["chat_historico"] = []
-    estado["chat_pendente"] = None
-    estado["chat_autoriza"] = False
-    st.rerun()
-
-# Aparece antes dos outros controles para limpar o estado com segurança.
+# Reinicia a conversa antes de desenhar os controles de autorização.
 if st.button("Nova conversa", key="chat_nova"):
     estado["chat_historico"] = []
     estado["chat_pendente"] = None
     estado["chat_autoriza"] = False
     st.rerun()
 
+# Escolha do tipo de pesquisa na barra lateral.
+st.sidebar.header("Configurações da consulta")
+
+modo_busca = st.sidebar.selectbox(
+    "Modo de busca",
+    ["Por palavras", "Por significado (local)"],
+    key="chat_modo_busca",
+    disabled=bool(
+        estado["chat_historico"] or estado["chat_pendente"]
+    ),
+)
+
+st.sidebar.caption(
+    "Para trocar o modo durante uma conversa, "
+    "clique em Nova conversa."
+)
+
+if modo_busca == "Por significado (local)":
+    st.sidebar.warning(
+        "Os resultados são documentos candidatos. "
+        "Confira os trechos antes de autorizar a IA."
+    )
+
+st.sidebar.divider()
+
+# Exibe novamente o painel para importar TXT, PDF e DOCX.
+# Após uma inclusão, descarta o contexto anterior da conversa.
+if mostrar_importacao(BASE / "documentos"):
+    estado["chat_historico"] = []
+    estado["chat_pendente"] = None
+    estado["chat_autoriza"] = False
+    st.rerun()
+
 historico = estado["chat_historico"]
+
+st.caption(f"Modo de busca selecionado: {modo_busca}")
 
 if historico:
     st.caption("Assunto inicial: " + historico[0]["pergunta"])
@@ -51,7 +84,7 @@ st.info(
     "Para trocar de tema, clique em Nova conversa."
 )
 
-# Mostra as perguntas e respostas já concluídas.
+# Mostra as perguntas e respostas concluídas.
 for turno in historico:
     with st.chat_message("user"):
         st.text(turno["pergunta"])
@@ -78,7 +111,7 @@ nova = st.chat_input(
     ),
 )
 
-# Primeiro prepara a consulta localmente, sem chamar a API.
+# Prepara a consulta localmente, sem enviar nada ao Gemini.
 if nova:
     try:
         texto_busca, pedido = montar_consulta(nova, historico)
@@ -88,7 +121,35 @@ if nova:
             raise ValueError("Não encontrei a pasta documentos.")
 
         documentos = carregar_documentos(pasta)
-        resultados = buscar_por_pergunta(documentos, texto_busca)
+        if not documentos:
+            raise ValueError(
+                "Nenhum documento TXT com conteúdo pôde ser carregado."
+            )
+
+        if modo_busca == "Por significado (local)":
+            # A busca opcional só é importada quando for selecionada.
+            try:
+                from busca_semantica import buscar_semantico
+            except ImportError as erro:
+                raise ValueError(
+                    "Não consegui carregar a busca semântica. "
+                    "Confira se busca_semantica.py está na pasta "
+                    "do projeto e se as dependências foram instaladas. "
+                    "A busca por palavras continua disponível."
+                ) from erro
+
+            with st.spinner(
+                "Buscando por significado no computador..."
+            ):
+                resultados = buscar_semantico(
+                    documentos,
+                    texto_busca,
+                )
+        else:
+            resultados = buscar_por_pergunta(
+                documentos,
+                texto_busca,
+            )
 
         if not resultados:
             raise ValueError(
@@ -129,7 +190,7 @@ if pendente is not None:
         estado["chat_autoriza"] = False
         st.rerun()
 
-    # Reutiliza sua configuração local, sem mostrar a chave.
+    # Lê a configuração local, sem exibir a chave.
     config = dotenv_values(BASE / ".env")
 
     chave = (

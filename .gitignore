@@ -223,3 +223,5 @@ __marimo__/
 
 # Copias locais criadas pela importacao de documentos
 documentos/importado_*.txt
+
+.cache_modelos/
