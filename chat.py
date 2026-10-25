@@ -10,6 +10,7 @@ from app import carregar_documentos
 from busca import buscar_por_pergunta
 from consulta_ia import MODELO_PADRAO, gerar_resposta, preparar_contexto
 from conversa import montar_consulta
+from painel_documentos import mostrar_importacao
 
 BASE = Path(__file__).resolve().parent
 MAX_TURNOS = 10
@@ -26,6 +27,12 @@ st.caption(
 estado = st.session_state
 estado.setdefault("chat_historico", [])
 estado.setdefault("chat_pendente", None)
+
+if mostrar_importacao(BASE / "documentos"):
+    estado["chat_historico"] = []
+    estado["chat_pendente"] = None
+    estado["chat_autoriza"] = False
+    st.rerun()
 
 # Aparece antes dos outros controles para limpar o estado com segurança.
 if st.button("Nova conversa", key="chat_nova"):

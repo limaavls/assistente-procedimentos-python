@@ -1,164 +1,173 @@
 # Assistente de Procedimentos Administrativos
 
-Aplicação em Python para pesquisar procedimentos administrativos, consultar documentos de origem e gerar respostas opcionais com a Gemini API.
+Aplicação em Python para pesquisar procedimentos administrativos, consultar fontes e gerar respostas opcionais com a Gemini API.
 
-O projeto possui uma interface de consulta com Streamlit e um modo de conversa com memória simples do assunto.
+O projeto possui uma interface de consulta individual, um modo de conversa com memória simples do assunto e importação local de documentos TXT, PDF e DOCX pelo navegador.
 
-> Projeto de estudo e portfólio. Todos os documentos de demonstração são fictícios e não representam procedimentos oficiais de uma instituição.
+> Projeto de estudo e portfólio. Utilize somente documentos fictícios. A aplicação não representa procedimentos oficiais de uma instituição.
 
 ## Objetivo
 
 Aplicar programação a uma necessidade da rotina administrativa: localizar informações em documentos e conferir a origem das orientações apresentadas.
 
-O desenvolvimento envolve leitura de arquivos, pesquisa textual, interface web, integração com IA, testes automatizados e controle de versões.
+O desenvolvimento envolve leitura de arquivos, pesquisa textual, interface web, integração com IA, testes e controle de versões.
 
-A aplicação não aprova solicitações, não executa procedimentos administrativos e não substitui a conferência das orientações oficiais.
+A aplicação não aprova solicitações nem substitui a conferência dos procedimentos oficiais.
 
 ## Funcionalidades
 
 | Recurso | Funcionamento |
 | --- | --- |
-| Interface de consulta | Pesquisa pelo navegador, com visualização de trechos e documentos completos. |
-| Busca por perguntas | Extrai palavras da consulta e procura correspondências nos documentos. |
-| Normalização | Compara textos sem depender de acentos ou maiúsculas. |
-| Ordenação | Prioriza documentos com mais palavras distintas em comum com a pesquisa. |
-| Respostas com Gemini | Geração opcional com confirmação antes do envio. |
-| Modo de conversa | Mantém perguntas e respostas na sessão e permite perguntas complementares. |
-| Memória simples do assunto | Reutiliza a primeira pergunta e a pergunta respondida mais recente. |
-| Testes automatizados | Verificações da busca, integração simulada, interface de consulta e preparação da conversa. |
-| GitHub Actions | Instala dependências e executa os testes a cada push. |
+| Consulta individual | Pesquisa pelo navegador, com apresentação de trechos e documentos completos. |
+| Conversa | Perguntas complementares com memória limitada do assunto. |
+| Importação de documentos | Seleção de TXT, PDF ou DOCX pelo painel lateral do chat. |
+| Prévia da importação | Exibição do texto extraído antes de incluí-lo na base. |
+| Busca textual | Normalização de acentos e maiúsculas e ordenação por palavras em comum. |
+| Respostas com Gemini | Geração opcional após autorização de envio. |
+| Testes automatizados | Verificações da busca, integração, interface individual, conversa e importação. |
+| GitHub Actions | Instalação das dependências e execução dos testes a cada push. |
 
-A geração com IA é experimental. As afirmações e referências precisam ser conferidas nos documentos originais.
+As respostas com IA são experimentais. Afirmações e citações precisam ser conferidas nos documentos originais.
 
-## Interfaces disponíveis
+## Interfaces
 
-Existem duas entradas alternativas para o mesmo projeto. Elas compartilham a busca, a integração com Gemini e a configuração local.
+### Consulta individual — interface.py
 
-### Consulta individual: interface.py
+Permite pesquisar uma pergunta, visualizar os parágrafos encontrados, consultar o conteúdo disponível de cada fonte e solicitar uma resposta com IA.
 
-Permite pesquisar uma pergunta, conferir os documentos candidatos e solicitar uma resposta com IA.
+Pesquisar não consulta a API. O envio exige autorização e clique no botão de geração.
 
-Pesquisar é uma operação local. O envio ao Google depende da autorização e do botão de geração.
+### Conversa e importação — chat.py
 
-Uma nova pesquisa limpa a resposta e a autorização anteriores.
+Permite continuar um assunto com perguntas complementares e adicionar documentos pelo painel lateral.
 
-### Conversa: chat.py
+A memória utiliza a primeira pergunta e a pergunta respondida mais recente. As respostas anteriores da IA são exibidas, mas não são reenviadas como fontes.
 
-Permite fazer perguntas complementares sobre o mesmo assunto:
+Use `Nova conversa` para mudar de assunto.
+
+O histórico fica na sessão do navegador, sem banco de dados. A versão atual permite até 10 respostas por conversa.
+
+A inclusão de um documento reinicia a conversa e descarta a pergunta pendente, evitando continuar com trechos preparados antes da mudança na base.
+
+## Importação de documentos
 
 ```text
-Como solicitar material?
+Selecionar um arquivo
         ↓
-Resposta baseada nos documentos
+Extrair e revisar o texto
         ↓
-E quais dados preciso informar?
+Confirmar a inclusão
         ↓
-Nova consulta considerando o assunto anterior
+Salvar uma cópia TXT na base local
+        ↓
+Pesquisar o conteúdo
 ```
 
-Cada pergunta é preparada localmente antes de qualquer envio à API.
+A importação não chama o Gemini nem exige uma chave de API. O envio de trechos à IA continua sendo uma ação separada.
 
-O usuário pode conferir o pedido completo, as perguntas anteriores selecionadas e os trechos que serão enviados.
+O painel de importação está disponível em `chat.py`. Os arquivos incluídos também podem ser consultados por `interface.py`, pois ambas as telas utilizam a mesma pasta.
 
-Depois, precisa autorizar e clicar em `Gerar resposta com IA`.
+### Formatos e limites
 
-Também é possível cancelar a pergunta pendente sem realizar o envio.
+| Item | Comportamento desta versão |
+| --- | --- |
+| TXT | Leitura em UTF-8, com ou sem BOM. |
+| PDF | Extração de texto, sem reconhecimento de imagens. |
+| DOCX | Leitura de parágrafos e tabelas principais na ordem do documento. |
+| DOC antigo | Não aceito. |
+| Tamanho do arquivo | Até 5 MiB para processamento. |
+| PDF | Até 30 páginas. |
+| Texto extraído | Até 100.000 caracteres. |
+| PDF protegido | Recusado. |
+| Página de PDF sem texto extraível | O arquivo inteiro é recusado, inclusive se houver uma página em branco. |
+| DOCX expandido | Recusado quando ultrapassa o limite interno de 20 MiB. |
 
-## Como funciona a memória da conversa
+O limite de 5 MiB é verificado pela aplicação após a seleção do arquivo; não substitui a configuração de tamanho máximo do servidor Streamlit.
 
-A preparação está em `conversa.py`.
+Não existe OCR nesta versão. PDFs digitalizados apenas como imagem não são convertidos.
 
-Para cada pergunta, o programa considera:
+A extração de DOCX não garante a inclusão de cabeçalhos, rodapés, caixas de texto, imagens, numeração automática ou outros elementos especiais.
 
-- A pergunta atual.
-- A primeira pergunta da conversa.
-- A pergunta respondida mais recente, quando for diferente da primeira.
+A extração de PDF pode alterar a organização de colunas e tabelas. Confira a prévia com o original antes de confirmar.
 
-Essas perguntas ajudam a manter o assunto na busca e na solicitação ao Gemini.
+Essas verificações não tornam a aplicação adequada para receber arquivos arbitrários de terceiros. Use arquivos pequenos e de sua confiança.
 
-As respostas anteriores da IA são mostradas na tela, mas não são reenviadas como fontes. As informações usadas para responder devem vir dos trechos dos documentos.
+### Armazenamento e fontes
 
-Essa é uma memória limitada de assunto, não uma interpretação completa de todo o histórico.
+A confirmação salva apenas o texto extraído:
 
-Referências como “explique o segundo item da sua resposta” podem não funcionar adequadamente, pois as respostas anteriores não são enviadas ao modelo.
+```text
+documentos/importado_nome_identificador.txt
+```
 
-### Troca de tema e duração
+A cópia inclui o nome do arquivo de origem. No PDF, o texto também recebe marcadores de página.
 
-Use `Nova conversa` para mudar de assunto. A aplicação não identifica automaticamente uma mudança de tema.
+O original não é alterado e não é guardado integralmente pelo projeto.
 
-O histórico fica na sessão do navegador, sem banco de dados. Ele pode ser perdido ao recarregar a página ou encerrar a sessão.
+Para documentos importados, a visualização de “documento completo” mostra a cópia textual extraída, não uma reprodução visual do PDF ou do Word. Preserve o original para conferência.
 
-A versão atual permite até 10 respostas por conversa. Após esse limite, inicie uma nova.
+Reenviar o mesmo nome com o mesmo texto extraído não cria outra cópia. Se o conteúdo mudar, uma nova cópia é criada sem apagar a anterior.
 
-Limpar a conversa remove o histórico da aplicação, mas não apaga informações que já tenham sido enviadas ao provedor da API.
+Não existe substituição automática de versões: documentos antigos e novos podem continuar participando da busca.
+
+As cópias persistem no disco depois de fechar a aplicação. Elas não são isoladas por sessão ou por usuário.
+
+### Excluir uma importação
+
+Exclua manualmente o arquivo correspondente a `importado_*.txt` na pasta `documentos`.
+
+Depois, inicie uma nova conversa ou faça outra pesquisa para evitar utilizar resultados preparados anteriormente.
+
+A exclusão local não apaga informações que já tenham sido enviadas à API.
 
 ## Como funciona a busca
 
-Os arquivos são lidos em formato TXT, com codificação UTF-8, diretamente da pasta `documentos`.
+A base consultada continua sendo formada por TXT em UTF-8 diretamente na pasta `documentos`.
 
-| Modo | Comportamento |
+Os arquivos PDF e DOCX passam pela importação antes de participar dessa busca.
+
+| Módulo | Responsabilidade |
 | --- | --- |
-| `app.py` | Busca literal por palavra ou expressão, com linhas de contexto. |
-| `busca.py` | Extrai palavras da pergunta, ordena os documentos e recupera parágrafos. |
+| `app.py` | Leitura dos TXT, normalização e busca literal pelo terminal. |
+| `busca.py` | Extração de palavras da pergunta, ordenação e recuperação de parágrafos. |
+| `conversa.py` | Preparação da pergunta atual com referência ao assunto anterior. |
 
-A interface de consulta, o chat e a consulta com IA utilizam a busca por palavras.
+Uma pesquisa por `solicitacao` pode encontrar `solicitação`. `Mat` não encontra `material` apenas por ser parte da palavra.
 
-Uma pesquisa por `solicitacao` pode encontrar `solicitação`. Já `mat` não encontra `material` por correspondência parcial.
+Sinônimos e flexões não são reconhecidos automaticamente.
 
-A ordenação não representa uma porcentagem de confiança. Encontrar palavras em comum não garante que o documento responda à pergunta.
-
-A busca ainda não reconhece automaticamente sinônimos ou flexões. `Material`, `materiais` e `suprimentos` são termos diferentes.
+A ordenação é baseada em palavras em comum, não em uma porcentagem de confiança. Encontrar um documento não comprova que ele responda à pergunta.
 
 ## Integração com Gemini
 
-O arquivo `consulta_ia.py` prepara os trechos e realiza a chamada à API.
+O módulo `consulta_ia.py` prepara os trechos e solicita a geração da resposta. As duas interfaces reutilizam essas funções.
 
-As duas interfaces reutilizam essas funções.
-
-| Limite | Configuração |
+| Configuração | Limite |
 | --- | --- |
-| Pergunta digitada | Até 500 caracteres. |
-| Documentos selecionados | Até três documentos candidatos. |
-| Contexto dos documentos | Até 12.000 caracteres, incluindo identificação das fontes. |
-| Conteúdo acima do limite | Interrompe a operação sem cortar o texto silenciosamente. |
+| Pergunta digitada | 500 caracteres. |
+| Documentos selecionados | Até três candidatos. |
+| Contexto dos documentos | 12.000 caracteres, incluindo identificação das fontes. |
 
-No chat, o pedido enviado ao modelo inclui também as perguntas anteriores selecionadas e as instruções de contextualização. Por isso, o pedido completo pode ultrapassar 500 caracteres.
+Uma importação pode ser aceita e, mesmo assim, produzir trechos grandes demais para uma determinada consulta. Os limites de importação e de envio à IA são diferentes.
 
-Os limites são escolhas da aplicação, não limites gerais da Gemini API.
+No chat, o pedido inclui também as perguntas anteriores selecionadas para identificar o assunto.
 
-As instruções pedem que o modelo utilize os trechos recebidos, indique as fontes e reconheça informações ausentes.
-
-A aplicação não verifica automaticamente se cada afirmação está apoiada na fonte citada.
+As instruções pedem que o modelo use os documentos, cite as fontes e reconheça informações ausentes. A aplicação ainda não valida automaticamente essas afirmações e referências.
 
 ## Tecnologias
 
-| Tecnologia | Uso |
-| --- | --- |
-| Python | Leitura de arquivos, normalização, pesquisa e preparação das consultas. |
-| Streamlit | Interfaces web e testes da interface de consulta com AppTest. |
-| Gemini API e google-genai | Geração de respostas com IA. |
-| python-dotenv | Leitura das configurações locais. |
-| httpx | Tratamento de falhas de conexão. |
-| unittest e unittest.mock | Testes e simulação de dependências. |
-| Git e GitHub | Controle de versões. |
-| GitHub Actions | Execução automática dos testes. |
+Python, Streamlit, Gemini API, google-genai, python-dotenv, httpx, pypdf, python-docx, unittest, unittest.mock, Git e GitHub Actions.
 
 ## Estrutura
 
 ```text
 assistente-procedimentos-python/
-│
 ├── .github/
 │   └── workflows/
 │       └── testes.yml
-│
 ├── documentos/
-│   ├── solicitacao_material.txt
-│   ├── teste_busca.txt
-│   ├── ajuste_registro_ponto.txt
-│   ├── suporte_tecnico_ti.txt
-│   └── protocolo_documentos.txt
-│
+│   ├── documentos fictícios publicados
+│   └── importado_*.txt              # Cópias locais ignoradas pelo Git
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
@@ -166,22 +175,21 @@ assistente-procedimentos-python/
 ├── busca.py
 ├── consulta_ia.py
 ├── conversa.py
+├── importacao.py
+├── painel_documentos.py
 ├── interface.py
 ├── chat.py
 ├── test_app.py
 ├── test_busca.py
 ├── test_consulta_ia.py
 ├── test_interface.py
-└── test_conversa.py
+├── test_conversa.py
+└── test_importacao.py
 ```
-
-O arquivo `.env` e a pasta `venv` são locais e não devem ser publicados.
 
 ## Instalação no Windows
 
 ### 1. Obter o projeto
-
-Com o Git instalado:
 
 ```powershell
 git clone https://github.com/limaavls/assistente-procedimentos-python.git
@@ -190,31 +198,29 @@ cd assistente-procedimentos-python
 
 Se já houver uma cópia, abra a pasta existente no Cursor.
 
-Execute os comandos seguintes no terminal da pasta principal.
-
 ### 2. Criar o ambiente virtual
 
-É necessário ter Python instalado. A automação utiliza Python 3.13.
-
-Crie o ambiente apenas se ele ainda não existir:
+Com Python instalado, execute somente se o ambiente ainda não existir:
 
 ```powershell
 python -m venv venv
 ```
 
-Os comandos deste README chamam diretamente o Python do ambiente, sem exigir ativação separada.
+O workflow de testes utiliza Python 3.13.
 
-Se o ambiente se chama `.venv`, utilize esse nome nos caminhos.
+Se seu ambiente se chama `.venv`, substitua `venv` por `.venv` nos comandos seguintes.
 
 ### 3. Instalar as dependências
 
-O `requirements.txt` contém:
+O `requirements.txt` inclui:
 
 ```text
 streamlit
 google-genai
 python-dotenv
 httpx
+pypdf>=5.9
+python-docx>=1.2
 ```
 
 Instale:
@@ -223,91 +229,76 @@ Instale:
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-A instalação não realiza consultas ao Gemini.
+## Executar as interfaces
 
-## Executar o modo de conversa
+### Conversa com painel de importação
 
 ```powershell
 .\venv\Scripts\python.exe -m streamlit run chat.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
-Abra o endereço informado no terminal.
+No painel lateral, selecione o arquivo, extraia o texto, revise e confirme a inclusão.
 
-Comece com uma pergunta específica, como:
+Para testar, use uma pergunta que mencione um assunto do documento importado.
 
-```text
-Como solicitar material?
-```
-
-Depois de conferir e gerar a resposta, experimente:
-
-```text
-E quais dados preciso informar?
-```
-
-Para mudar de assunto, clique em `Nova conversa`.
-
-O chat exige a configuração da API para gerar respostas. Sem chave, o conteúdo pode ser preparado localmente, mas o envio fica indisponível.
-
-## Executar a interface de consulta individual
+### Consulta individual
 
 ```powershell
 .\venv\Scripts\python.exe -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
-Essa interface permite pesquisar, visualizar parágrafos, consultar documentos completos e gerar uma resposta opcional.
+Abra o endereço informado no terminal. Para encerrar, pressione `Ctrl + C`.
 
-A pesquisa local funciona sem chave de API.
+Esses comandos iniciam a aplicação localmente e desativam o envio de estatísticas de uso do Streamlit. Não publicam a ferramenta na internet.
 
-Os comandos das interfaces utilizam o endereço local do computador e desativam o envio de estatísticas de uso do Streamlit. Eles não publicam a aplicação na internet.
+## Configurar a API
 
-Para encerrar uma aplicação, pressione `Ctrl + C` no terminal. Depois, execute o comando da outra interface.
+A importação e a busca local não precisam de chave. A geração de respostas precisa da configuração do Gemini.
 
-## Configurar o Gemini
-
-Utilize uma chave do Google AI Studio e confira as condições do projeto utilizado.
-
-Na pasta principal, crie `.env`:
+Crie `.env` na pasta principal:
 
 ```dotenv
 GEMINI_API_KEY=COLE_SUA_CHAVE_AQUI
-GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
-Substitua o exemplo pela chave real somente no arquivo local.
+Substitua o exemplo apenas no arquivo local.
 
-O modelo pode ser configurado por `GEMINI_MODEL`. Confira sua disponibilidade e o plano da conta utilizada.
+O modelo pode ser configurado por `GEMINI_MODEL`. Quando essa variável não está definida, a aplicação utiliza `MODELO_PADRAO` de `consulta_ia.py`.
 
-O `.gitignore` deve incluir:
+Se a integração já estiver funcionando, preserve sua configuração atual.
+
+Confira a disponibilidade, as cotas e o plano do modelo na conta utilizada. O código não verifica faturamento nem garante ausência de cobrança.
+
+### Proteção no Git
+
+O `.gitignore` deve conter:
 
 ```gitignore
 .env
 venv/
 .venv/
 __pycache__/
+documentos/importado_*.txt
 ```
 
-Verifique a regra:
+Preserve as demais regras existentes.
+
+Confira o `.env`:
 
 ```powershell
 git check-ignore -v .env
-```
-
-Confira se o arquivo já está sendo acompanhado pelo Git:
-
-```powershell
 git ls-files -- .env
 ```
 
 O segundo comando não deve listar o arquivo.
 
-Uma regra no `.gitignore` não remove automaticamente arquivos já registrados. Se uma chave for exposta, revogue-a no provedor e crie outra.
+Regras de exclusão não retiram automaticamente arquivos já registrados. Se uma chave for exposta, revogue-a e crie outra.
 
-Não coloque chaves reais nos testes, no código, no README ou em capturas de tela.
+Não publique arquivos reais de trabalho, credenciais ou informações pessoais.
 
-## Execução pelo terminal
+## Uso pelo terminal
 
-Busca literal, sem IA:
+Busca literal:
 
 ```powershell
 .\venv\Scripts\python.exe app.py
@@ -319,78 +310,61 @@ Consulta individual com IA:
 .\venv\Scripts\python.exe consulta_ia.py
 ```
 
-Na consulta com IA, confira os trechos antes de digitar `SIM` para autorizar o envio.
-
-## Documentos de demonstração
-
-| Arquivo | Tema fictício |
-| --- | --- |
-| `solicitacao_material.txt` | Solicitação de materiais. |
-| `teste_busca.txt` | Acentos, siglas e ocorrências próximas. |
-| `ajuste_registro_ponto.txt` | Correção do ponto e encaminhamento ao RH. |
-| `suporte_tecnico_ti.txt` | Abertura e acompanhamento de chamados. |
-| `protocolo_documentos.txt` | Conferência e encaminhamento de documentos. |
-
-Os arquivos precisam estar diretamente na pasta `documentos`.
-
-Para ampliar a base atual, adicione outro TXT em UTF-8 e faça uma nova consulta.
-
-A leitura ainda não percorre subpastas nem abre PDF, DOCX, ZIP ou imagens.
-
-O envio de arquivos pela interface será desenvolvido na próxima etapa.
+Confira os trechos antes de autorizar o envio.
 
 ## Testes automatizados
 
-Execute toda a suíte:
+Execute:
 
 ```powershell
 .\venv\Scripts\python.exe -m unittest discover -v
 ```
 
-| Arquivo | Testes | Cobertura |
+| Arquivo | Quantidade | Finalidade |
 | --- | --- | --- |
-| `test_app.py` | 7 | Normalização, busca literal e união de trechos. |
-| `test_busca.py` | 6 | Extração de palavras, ordenação e recuperação de parágrafos. |
-| `test_consulta_ia.py` | 12 | Preparação do contexto e integração com respostas simuladas. |
-| `test_interface.py` | 10 | Interações simuladas de `interface.py`. |
-| `test_conversa.py` | 6 | Preparação das perguntas com memória simples do assunto. |
-| Total | 41 | Verificações definidas nesta versão. |
+| `test_app.py` | 7 | Normalização e busca literal. |
+| `test_busca.py` | 6 | Extração de palavras e ordenação. |
+| `test_consulta_ia.py` | 12 | Integração com respostas simuladas. |
+| `test_interface.py` | 10 | Interações simuladas da consulta individual. |
+| `test_conversa.py` | 6 | Preparação da conversa com contexto limitado. |
+| `test_importacao.py` | 9 | Extração, validações e armazenamento da importação. |
+| Total | 50 | Testes definidos nesta etapa. |
 
-Mantendo esses arquivos, uma execução bem-sucedida deve terminar com:
+Mantendo esses arquivos, o resultado esperado é:
 
 ```text
-Ran 41 tests in ...
+Ran 50 tests in ...
 
 OK
 ```
 
-Esse é o resultado esperado. Confira a execução local ou a aba Actions para consultar o resultado real de cada versão.
+Consulte a execução local ou o GitHub Actions para verificar o resultado real de cada versão.
 
-### Testes da conversa
+### Testar somente a importação
 
 ```powershell
-.\venv\Scripts\python.exe -m unittest -v test_conversa
+.\venv\Scripts\python.exe -m unittest -v test_importacao
 ```
 
-Verificam a primeira pergunta, a manutenção do assunto, a seleção das perguntas anteriores, a exclusão das respostas da IA do pedido, a validação da entrada e a preservação do histórico recebido pela função.
+Os testes verificam preservação de acentos, leitura de DOCX, identificação de página, entradas inválidas, PDFs recusados, limites de texto, destino da gravação e comportamento das cópias repetidas ou alteradas.
 
-Esses testes não chamam a API.
+Alguns cenários usam documentos gerados em memória; a leitura do conteúdo de uma página PDF também possui um caso simulado.
+
+Os testes não utilizam arquivos particulares nem fazem chamadas reais à IA.
 
 ### Limites da cobertura
 
-Os testes de `test_interface.py` continuam cobrindo a interface de consulta individual. Eles não cobrem automaticamente a nova tela `chat.py`.
+A suíte não comprova a veracidade das respostas reais do Gemini.
 
-Os testes de `test_conversa.py` verificam a preparação do pedido, não o funcionamento visual do chat ou o entendimento real do modelo.
+Os testes de interface continuam cobrindo `interface.py`, não todos os controles de `chat.py` ou do painel de upload.
 
-A suíte não comprova a veracidade das respostas da IA, a correção das citações ou todos os comportamentos possíveis da aplicação.
+Os testes da conversa verificam a preparação do pedido, não o entendimento real do modelo.
 
-A quantidade de testes não representa uma porcentagem de cobertura.
+A importação ainda precisa de avaliação manual com diferentes documentos. Os testes não garantem segurança contra todo arquivo malformado ou malicioso.
 
 ## GitHub Actions
 
-O workflow está em `.github/workflows/testes.yml`.
-
-Ele prepara Python 3.13, instala as dependências e executa:
+O workflow em `.github/workflows/testes.yml` instala as dependências e executa:
 
 ```text
 python -m unittest discover -v
@@ -398,69 +372,53 @@ python -m unittest discover -v
 
 A execução ocorre a cada push e também pode ser iniciada manualmente pela aba Actions.
 
-Não é necessário cadastrar a chave do Gemini para executar os testes atuais.
+Não é necessário colocar a chave do Gemini no GitHub para executar os testes.
 
-Uma execução verde indica que os testes configurados passaram, não que todas as respostas reais da IA estejam corretas.
+Uma execução verde indica que os testes configurados passaram, não que toda a aplicação esteja livre de erros.
 
-## Avaliação manual do chat
+## Privacidade
 
-| Cenário | O que verificar |
-| --- | --- |
-| Primeira pergunta | Os trechos devem corresponder ao assunto solicitado. |
-| Pergunta complementar | O pedido deve incluir o assunto inicial e a pergunta atual. |
-| Autorização | Digitar ou revisar uma pergunta não deve enviar a consulta ao Gemini. |
-| Cancelamento | A pergunta pendente deve ser descartada sem envio. |
-| Nova conversa | Deve limpar o histórico e a pergunta pendente. |
-| Informação ausente | A resposta deve reconhecer a ausência, sem inventar regras. |
-| Erro da API | Não deve registrar uma resposta inexistente como concluída. |
+Na execução local, a extração e a busca ocorrem no computador que executa o aplicativo.
 
-As respostas devem ser comparadas com os documentos. O sucesso da chamada à API não significa que a resposta passou na avaliação de conteúdo.
+Ao autorizar uma resposta com Gemini, a pergunta, o contexto selecionado e, no chat, as perguntas anteriores escolhidas são enviados ao Google.
 
-## Privacidade e uso da API
+Nos serviços gratuitos, os termos aplicáveis podem permitir uso dos dados para melhoria dos produtos e revisão humana. Utilize somente dados fictícios.
 
-A pesquisa é local. A geração de uma resposta envia informações ao Google.
+As cópias importadas ficam em disco. O `.gitignore` evita sua inclusão normal no Git, mas não criptografa os arquivos nem restringe o acesso à aplicação.
 
-No chat, o envio inclui a pergunta atual, as perguntas anteriores selecionadas e os trechos dos documentos. As respostas anteriores da IA não são incluídas.
+Não existe autenticação ou separação da base por usuário.
 
-Utilize somente dados fictícios nesta demonstração. Não envie documentos internos reais, informações pessoais, senhas ou registros administrativos reais.
+Antes de qualquer uso institucional, será necessário avaliar autorização, tratamento dos dados e controle de acesso.
 
-Nos serviços gratuitos, os termos do provedor permitem o uso de entradas e respostas para melhoria dos produtos, com possibilidade de revisão humana. Confira as condições aplicáveis à conta utilizada.
+## Limitações atuais
 
-A gratuidade depende do modelo, do plano e das cotas. O código não verifica faturamento nem garante ausência de cobrança.
+A busca continua baseada em palavras, sem embeddings ou busca semântica.
 
-Referências oficiais:
+A memória da conversa considera o assunto inicial e a pergunta respondida mais recente. Para mudar de tema, utilize `Nova conversa`.
 
-- [Preços da Gemini API](https://ai.google.dev/gemini-api/docs/pricing)
-- [Limites de uso](https://ai.google.dev/gemini-api/docs/rate-limits)
-- [Termos da Gemini API](https://ai.google.dev/gemini-api/terms)
-- [Estado de sessão do Streamlit](https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state)
+A extração não preserva a aparência dos documentos nem garante todos os elementos de PDF e Word.
 
-## Limitações
+Versões importadas diferentes podem coexistir na base. Não há identificação automática de qual procedimento está vigente.
 
-A busca ainda depende de palavras. Não utiliza embeddings, banco vetorial ou busca semântica.
+As fontes citadas pela IA não são validadas automaticamente, e trechos importantes podem não ser recuperados.
 
-A memória da conversa é limitada ao assunto inicial e à pergunta respondida mais recente. Ela não representa uma compreensão completa do histórico.
+O projeto não possui sincronização com Google Drive, histórico permanente de conversas ou resultados medidos de economia de tempo em uma rotina real.
 
-Perguntas sobre outro tema podem continuar recuperando documentos do assunto inicial. Use `Nova conversa` para mudar de assunto.
+## Ciclo de melhorias
 
-O modelo recebe apenas os trechos selecionados. Informações importantes podem ficar de fora, e as respostas podem conter erros ou referências inadequadas.
-
-A aplicação não possui autenticação, histórico permanente, controle de versões dos procedimentos ou atualização automática por fontes externas.
-
-Não há resultados medidos de economia de tempo ou precisão em uma rotina administrativa real.
-
-## Ciclo de melhorias definido
-
-As próximas etapas serão desenvolvidas uma por vez, nesta ordem:
-
-| Ordem | Melhoria | Situação |
+| Ordem | Melhoria | Situação desta versão |
 | --- | --- | --- |
-| 1 | Conversa com contexto | Versão inicial adicionada nesta etapa; requer validação no navegador. |
-| 2 | Envio de documentos pela interface, incluindo PDF e Word | Planejado. |
-| 3 | Busca por significado | Planejado. |
-| 4 | Atualização automática de uma pasta aprovada no Google Drive | Planejado. |
+| 1 | Conversa com contexto | Versão inicial implementada. |
+| 2 | Importação de TXT, PDF e Word pela interface | Versão inicial adicionada nesta etapa. |
+| 3 | Busca por significado | Próxima etapa planejada. |
+| 4 | Atualização automática de pasta aprovada no Google Drive | Planejada após a busca por significado. |
 
-As três últimas funcionalidades ainda não estão implementadas.
+## Referências
+
+- [Streamlit: seleção de arquivos](https://docs.streamlit.io/develop/api-reference/widgets/st.file_uploader)
+- [pypdf: extração de texto](https://pypdf.readthedocs.io/en/stable/user/extract-text.html)
+- [python-docx: documentos](https://python-docx.readthedocs.io/en/latest/api/document.html)
+- [Termos da Gemini API](https://ai.google.dev/gemini-api/terms)
 
 ## Autor
 

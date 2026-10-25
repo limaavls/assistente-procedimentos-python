@@ -220,3 +220,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Copias locais criadas pela importacao de documentos
+documentos/importado_*.txt
