@@ -228,3 +228,9 @@ documentos/importado_*.txt
 
 # Credenciais locais do Google Drive
 .secrets/
+
+# Copias sincronizadas do Google Drive
+documentos/drive_*.txt
+
+# Registro local e backups da sincronizacao
+.estado_drive/
