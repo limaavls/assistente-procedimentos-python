@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 from app import TAMANHO_MINIMO_DO_TERMO, normalizar
+from citacoes import TrechoCandidato
 
 
 # Palavras que, sozinhas, ajudam pouco nesta busca simples.
@@ -26,17 +27,62 @@ def extrair_palavras(texto: str) -> set[str]:
     }
 
 
+def _trechos_com_posicao(
+    texto: str, palavras: set[str]
+) -> list[TrechoCandidato]:
+    """Recorta parágrafos e guarda a posição de cada um no texto original."""
+    corpo = texto.strip()
+    base = texto.find(corpo)
+    if base < 0:
+        base = 0
+        corpo = texto
+
+    paragrafos = re.split(r"\n\s*\n", corpo)
+    cursor = 0
+    trechos: list[TrechoCandidato] = []
+
+    for paragrafo in paragrafos:
+        posicao = corpo.find(paragrafo, cursor)
+        if posicao >= 0:
+            cursor = posicao + len(paragrafo)
+
+        if not (palavras & extrair_palavras(paragrafo)):
+            continue
+
+        limpo = paragrafo.strip()
+        if not limpo:
+            continue
+
+        inicio = None
+        fim = None
+        if posicao >= 0:
+            deslocamento = paragrafo.find(limpo)
+            candidato = base + posicao + max(deslocamento, 0)
+            termino = candidato + len(limpo)
+            if texto[candidato:termino] == limpo:
+                inicio = candidato
+                fim = termino
+
+        trechos.append(
+            TrechoCandidato(texto=limpo, inicio=inicio, fim=fim)
+        )
+
+    return trechos
+
+
 def buscar_por_pergunta(
     documentos: list[tuple[Path, str]],
     pergunta: str,
-) -> list[tuple[Path, str, list[str]]]:
+) -> list[tuple[Path, str, list[TrechoCandidato]]]:
     """Ordena documentos pela quantidade de palavras distintas em comum."""
     palavras = extrair_palavras(pergunta)
 
     if not palavras:
         return []
 
-    classificados: list[tuple[int, Path, str, list[str]]] = []
+    classificados: list[
+        tuple[int, Path, str, list[TrechoCandidato]]
+    ] = []
 
     for arquivo, texto in documentos:
         pontos = len(palavras & extrair_palavras(texto))
@@ -44,16 +90,7 @@ def buscar_por_pergunta(
         if pontos == 0:
             continue
 
-        # Uma linha vazia separa os parágrafos.
-        # O conteúdo original é preservado.
-        paragrafos = re.split(r"\n\s*\n", texto.strip())
-
-        trechos = [
-            paragrafo.strip()
-            for paragrafo in paragrafos
-            if palavras & extrair_palavras(paragrafo)
-        ]
-
+        trechos = _trechos_com_posicao(texto, palavras)
         classificados.append((pontos, arquivo, texto, trechos))
 
     # Mais palavras em comum primeiro; nome do arquivo desempata.
