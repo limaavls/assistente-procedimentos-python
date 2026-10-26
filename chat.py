@@ -25,6 +25,16 @@ from painel_documentos import mostrar_importacao
 BASE = Path(__file__).resolve().parent
 MAX_TURNOS = 10
 
+MODO_PALAVRAS = "Por palavras"
+MODO_SEMANTICO = "Por significado (local)"
+MODO_HIBRIDO = "Híbrida (palavras + significado)"
+
+MODOS_BUSCA = [
+    MODO_PALAVRAS,
+    MODO_SEMANTICO,
+    MODO_HIBRIDO,
+]
+
 
 # -------------------------------------------------------------------
 # Funções de estado
@@ -70,6 +80,79 @@ def atualizar_autorizacao() -> None:
             "chat_autoriza_widget",
             False,
         )
+    )
+
+
+def executar_busca(
+    modo_busca: str,
+    documentos,
+    texto_busca: str,
+):
+    """
+    Executa o mecanismo selecionado pelo usuário.
+
+    A função centraliza a escolha entre:
+    - busca por palavras;
+    - busca semântica local;
+    - busca híbrida.
+
+    O contrato de retorno é o mesmo para os três modos.
+    """
+    if modo_busca == MODO_PALAVRAS:
+        return buscar_por_pergunta(
+            documentos,
+            texto_busca,
+        )
+
+    if modo_busca == MODO_SEMANTICO:
+        try:
+            from busca_semantica import (
+                buscar_semantico,
+            )
+
+        except ImportError as erro:
+            raise ValueError(
+                "Não consegui carregar a busca semântica. "
+                "Confira se busca_semantica.py está na pasta "
+                "do projeto e se as dependências foram "
+                "instaladas. "
+                "A busca por palavras continua disponível."
+            ) from erro
+
+        with st.spinner(
+            "Buscando por significado "
+            "no computador..."
+        ):
+            return buscar_semantico(
+                documentos,
+                texto_busca,
+            )
+
+    if modo_busca == MODO_HIBRIDO:
+        try:
+            from busca_hibrida import (
+                buscar_hibrido,
+            )
+
+        except ImportError as erro:
+            raise ValueError(
+                "Não consegui carregar a busca híbrida. "
+                "Confira busca_hibrida.py e as dependências "
+                "da busca semântica. "
+                "A busca por palavras continua disponível."
+            ) from erro
+
+        with st.spinner(
+            "Combinando busca por palavras "
+            "e significado no computador..."
+        ):
+            return buscar_hibrido(
+                documentos,
+                texto_busca,
+            )
+
+    raise ValueError(
+        "Modo de busca inválido."
     )
 
 
@@ -141,10 +224,7 @@ st.sidebar.header(
 
 modo_busca = st.sidebar.selectbox(
     "Modo de busca",
-    [
-        "Por palavras",
-        "Por significado (local)",
-    ],
+    MODOS_BUSCA,
     key="chat_modo_busca",
     disabled=bool(
         estado["chat_historico"]
@@ -158,10 +238,24 @@ st.sidebar.caption(
 )
 
 
-if modo_busca == "Por significado (local)":
+if modo_busca == MODO_SEMANTICO:
     st.sidebar.warning(
-        "Os resultados são documentos candidatos. "
+        "Os resultados são documentos candidatos "
+        "recuperados por significado. "
         "Confira os trechos antes de autorizar a IA."
+    )
+
+
+if modo_busca == MODO_HIBRIDO:
+    st.sidebar.info(
+        "A busca híbrida combina a ordem da busca "
+        "por palavras com a busca semântica local. "
+        "Os resultados continuam sendo apenas candidatos."
+    )
+
+    st.sidebar.caption(
+        "A fusão de rankings não representa "
+        "probabilidade de acerto."
     )
 
 
@@ -327,42 +421,11 @@ if nova:
                 "pôde ser carregado."
             )
 
-        if (
-            modo_busca
-            == "Por significado (local)"
-        ):
-            try:
-                from busca_semantica import (
-                    buscar_semantico,
-                )
-
-            except ImportError as erro:
-                raise ValueError(
-                    "Não consegui carregar a busca semântica. "
-                    "Confira se busca_semantica.py está na pasta "
-                    "do projeto e se as dependências foram "
-                    "instaladas. "
-                    "A busca por palavras continua disponível."
-                ) from erro
-
-            with st.spinner(
-                "Buscando por significado "
-                "no computador..."
-            ):
-                resultados = (
-                    buscar_semantico(
-                        documentos,
-                        texto_busca,
-                    )
-                )
-
-        else:
-            resultados = (
-                buscar_por_pergunta(
-                    documentos,
-                    texto_busca,
-                )
-            )
+        resultados = executar_busca(
+            modo_busca,
+            documentos,
+            texto_busca,
+        )
 
         if not resultados:
             raise ValueError(
@@ -384,6 +447,7 @@ if nova:
             "pergunta": nova.strip(),
             "pedido": pedido,
             "pacote": pacote,
+            "modo_busca": modo_busca,
         }
 
         limpar_autorizacao()
@@ -415,6 +479,14 @@ if pendente is not None:
     st.caption(
         "Pergunta aguardando sua revisão "
         "e autorização."
+    )
+
+    st.caption(
+        "Busca utilizada: "
+        + pendente.get(
+            "modo_busca",
+            modo_busca,
+        )
     )
 
     with st.expander(
@@ -581,6 +653,12 @@ if pendente is not None:
                     "contexto": (
                         pacote.contexto
                     ),
+                    "modo_busca": (
+                        pendente.get(
+                            "modo_busca",
+                            modo_busca,
+                        )
+                    ),
                 }
             )
 
@@ -606,6 +684,8 @@ st.caption(
     "As referências exibidas são conferidas quanto "
     "à existência e ao trecho citado. "
     "A interpretação da resposta ainda exige revisão. "
+    "A busca híbrida combina rankings locais e não representa "
+    "probabilidade de acerto. "
     "Limpar a conversa não apaga informações já "
     "enviadas ao provedor."
 )

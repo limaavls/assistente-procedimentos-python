@@ -10,6 +10,7 @@ from streamlit.testing.v1 import AppTest
 from citacoes import (
     ApresentacaoResposta,
     FonteApresentada,
+    TrechoCandidato,
 )
 
 
@@ -31,6 +32,30 @@ DOCUMENTOS = [
             "informe a data ao RH."
         ),
     ),
+]
+
+
+RESULTADO_HIBRIDO = [
+    (
+        Path("material.txt"),
+        (
+            "Para solicitar material, "
+            "informe o setor e a quantidade."
+        ),
+        [
+            TrechoCandidato(
+                texto=(
+                    "Para solicitar material, "
+                    "informe o setor e a quantidade."
+                ),
+                inicio=0,
+                fim=len(
+                    "Para solicitar material, "
+                    "informe o setor e a quantidade."
+                ),
+            )
+        ],
+    )
 ]
 
 
@@ -132,6 +157,17 @@ class TestChat(unittest.TestCase):
             )
         )
 
+        self.busca_hibrida = (
+            self.aplicar_patch(
+                patch(
+                    "busca_hibrida.buscar_hibrido",
+                    return_value=(
+                        RESULTADO_HIBRIDO
+                    ),
+                )
+            )
+        )
+
         cliente = self.aplicar_patch(
             patch(
                 "consulta_ia.genai.Client",
@@ -191,6 +227,18 @@ class TestChat(unittest.TestCase):
             f"{rotulo}"
         )
 
+    def selecionar_modo(
+        self,
+        modo,
+    ):
+        self.tela.selectbox(
+            key="chat_modo_busca"
+        ).set_value(
+            modo
+        )
+
+        self.executar()
+
     def enviar_pergunta(
         self,
         texto=(
@@ -237,6 +285,111 @@ class TestChat(unittest.TestCase):
             for item
             in self.tela.caption
         ]
+
+    def test_modos_incluem_busca_hibrida(self):
+        opcoes = (
+            self.tela.selectbox(
+                key="chat_modo_busca"
+            ).options
+        )
+
+        self.assertIn(
+            "Por palavras",
+            opcoes,
+        )
+
+        self.assertIn(
+            "Por significado (local)",
+            opcoes,
+        )
+
+        self.assertIn(
+            "Híbrida (palavras + significado)",
+            opcoes,
+        )
+
+    def test_busca_hibrida_chama_fusao_local(self):
+        self.selecionar_modo(
+            "Híbrida (palavras + significado)"
+        )
+
+        self.enviar_pergunta()
+
+        self.busca_hibrida.assert_called_once()
+
+        documentos, pergunta = (
+            self.busca_hibrida
+            .call_args
+            .args
+        )
+
+        self.assertEqual(
+            documentos,
+            DOCUMENTOS,
+        )
+
+        self.assertIn(
+            "Como solicitar material?",
+            pergunta,
+        )
+
+        pendente = (
+            self.tela.session_state[
+                "chat_pendente"
+            ]
+        )
+
+        self.assertEqual(
+            pendente["modo_busca"],
+            (
+                "Híbrida "
+                "(palavras + significado)"
+            ),
+        )
+
+        self.assertIn(
+            "[F1]",
+            pendente[
+                "pacote"
+            ].contexto,
+        )
+
+        self.gerar_ia.assert_not_called()
+
+    def test_busca_hibrida_mostra_aviso_de_fusao(self):
+        self.selecionar_modo(
+            "Híbrida (palavras + significado)"
+        )
+
+        mensagens = [
+            item.value
+            for item
+            in self.tela.sidebar.info
+        ]
+
+        self.assertTrue(
+            any(
+                "busca híbrida"
+                in mensagem.casefold()
+                for mensagem
+                in mensagens
+            )
+        )
+
+        captions = [
+            item.value
+            for item
+            in self.tela.sidebar.caption
+        ]
+
+        self.assertTrue(
+            any(
+                "probabilidade de acerto"
+                in mensagem.casefold()
+                for mensagem
+                in captions
+            )
+        )
 
     def test_pergunta_nao_consulta_ia_antes_da_autorizacao(self):
         self.enviar_pergunta()
@@ -290,6 +443,20 @@ class TestChat(unittest.TestCase):
                 0
             ].documento,
             "material.txt",
+        )
+
+    def test_pergunta_pendente_preserva_modo_de_busca(self):
+        self.enviar_pergunta()
+
+        pendente = (
+            self.tela.session_state[
+                "chat_pendente"
+            ]
+        )
+
+        self.assertEqual(
+            pendente["modo_busca"],
+            "Por palavras",
         )
 
     def test_marcar_checkbox_nao_envia_automaticamente(self):
@@ -387,6 +554,27 @@ class TestChat(unittest.TestCase):
                 "fontes_citadas"
             ][0]["identificador"],
             "F1",
+        )
+
+    def test_historico_preserva_modo_de_busca(self):
+        self.selecionar_modo(
+            "Híbrida (palavras + significado)"
+        )
+
+        self.concluir_primeiro_turno()
+
+        turno = (
+            self.tela.session_state[
+                "chat_historico"
+            ][0]
+        )
+
+        self.assertEqual(
+            turno["modo_busca"],
+            (
+                "Híbrida "
+                "(palavras + significado)"
+            ),
         )
 
     def test_historico_preserva_trecho_da_consulta(self):
@@ -681,6 +869,26 @@ class TestChat(unittest.TestCase):
                     "referências"
                     in item
                     and "interpretação"
+                    in item
+                )
+                for item
+                in captions_normalizados
+            )
+        )
+
+    def test_aviso_final_informa_limite_da_busca_hibrida(self):
+        captions_normalizados = [
+            item.casefold()
+            for item
+            in self.captions()
+        ]
+
+        self.assertTrue(
+            any(
+                (
+                    "busca híbrida"
+                    in item
+                    and "probabilidade de acerto"
                     in item
                 )
                 for item
