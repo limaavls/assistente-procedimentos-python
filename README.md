@@ -2,13 +2,13 @@
 
 Aplicação em Python para pesquisar procedimentos administrativos, consultar documentos e gerar respostas opcionais com a Gemini API.
 
-O projeto possui interface de consulta, conversa com contexto limitado, importação de documentos, OCR local para imagens e PDFs digitalizados, busca por palavras, busca semântica local, busca híbrida, sincronização com uma pasta aprovada no Google Drive e respostas com citações verificáveis.
+O projeto possui interface de consulta, conversa com contexto limitado, importação de documentos, OCR local para imagens e PDFs digitalizados, busca por palavras, busca semântica local, busca híbrida, sincronização com uma pasta aprovada no Google Drive, respostas com citações verificáveis e uma camada de avaliação automática da qualidade da recuperação e das respostas.
 
 > Projeto de estudo e portfólio. Utilize somente documentos fictícios. A aplicação não representa procedimentos oficiais de uma instituição.
 
-## Objetivo
+# Objetivo
 
-Aplicar programação a uma necessidade da rotina administrativa: localizar informações em documentos, extrair texto de arquivos digitais e digitalizados, recuperar trechos relevantes por diferentes estratégias, gerar respostas assistidas por inteligência artificial e permitir a conferência das evidências utilizadas.
+Aplicar programação, inteligência artificial e automação a uma necessidade da rotina administrativa: localizar informações em documentos, extrair texto de arquivos digitais e digitalizados, recuperar trechos relevantes por diferentes estratégias, gerar respostas fundamentadas e medir automaticamente a qualidade do sistema.
 
 O desenvolvimento reúne:
 
@@ -19,9 +19,11 @@ busca por palavras;
 busca semântica;
 busca híbrida;
 interface web;
-integração com APIs;
-automação;
-validação local de respostas;
+integração com Gemini;
+integração com Google Drive;
+validação local de citações;
+avaliação automática;
+métricas de recuperação;
 testes automatizados.
 ```
 
@@ -42,20 +44,71 @@ A aplicação não aprova solicitações nem substitui a conferência dos proced
 | Busca híbrida | Combina os rankings lexical e semântico usando Reciprocal Rank Fusion. |
 | Respostas com Gemini | Geração opcional após revisão e autorização. |
 | Citações verificáveis | Cada orientação precisa apontar para uma fonte e uma passagem existente no trecho enviado. |
-| Fontes por consulta | Referências `F1`, `F2`, `F3` etc. são criadas localmente para cada consulta. |
+| Fontes por consulta | Referências `F1`, `F2`, `F3` etc. são criadas localmente por consulta. |
 | Histórico com evidências | O chat preserva uma cópia das fontes utilizadas em cada resposta. |
-| Verificação do Drive | Confirmação de acesso e listagem dos itens da pasta. |
+| Avaliação de recuperação | Mede Precision, Recall e MRR dos modos de busca. |
+| Avaliação de respostas | Confere termos esperados, termos proibidos, status e citações. |
+| Benchmark controlado | Testa o avaliador sem chamar Gemini. |
+| Benchmark real opcional | Executa casos fictícios com Gemini após autorização explícita. |
+| Separação de falhas | Diferencia falhas de qualidade de falhas operacionais, como HTTP 429. |
+| Verificação do Drive | Confirma acesso e lista itens da pasta aprovada. |
 | Sincronização do Drive | Criação, atualização e retirada de cópias locais gerenciadas. |
-| OCR no Drive | Imagens e PDFs digitalizados compatíveis também podem entrar na base sincronizada. |
+| OCR no Drive | Imagens e PDFs digitalizados compatíveis podem entrar na base sincronizada. |
 | Repetição periódica | Sincronização em intervalos enquanto o programa estiver em execução. |
 | Backups locais | Preservação das cópias anteriores antes de alterações. |
-| Testes e GitHub Actions | Verificações automatizadas com documentos, respostas e integrações simuladas. |
+| Testes e GitHub Actions | Verificações automatizadas sem depender de credenciais reais. |
+
+# Arquitetura geral
+
+```text
+Documentos
+   ↓
+Importação / Google Drive
+   ↓
+Extração de texto
+   ↓
+OCR quando necessário
+   ↓
+Base TXT local
+   ↓
+┌───────────────────────────────┐
+│ Estratégia de recuperação     │
+│                               │
+│ • palavras                    │
+│ • semântica                   │
+│ • híbrida                     │
+└───────────────────────────────┘
+   ↓
+Trechos candidatos
+   ↓
+Referências locais F1, F2, F3...
+   ↓
+Revisão do usuário
+   ↓
+Autorização explícita
+   ↓
+Gemini
+   ↓
+JSON estruturado
+   ↓
+Validação local das citações
+   ↓
+Resposta apresentada
+   ↓
+Avaliação opcional
+```
 
 # Citações verificáveis
 
-O módulo `citacoes.py` centraliza a preparação, validação e apresentação das evidências utilizadas pela IA.
+O módulo:
 
-Para cada consulta, somente os trechos que realmente serão enviados ao modelo recebem identificadores locais:
+```text
+citacoes.py
+```
+
+centraliza a preparação, validação e apresentação das evidências utilizadas pela IA.
+
+Para cada consulta, somente os trechos realmente enviados recebem identificadores locais:
 
 ```text
 F1
@@ -68,29 +121,31 @@ Esses identificadores existem apenas dentro daquela consulta.
 
 `F1` de uma pergunta não representa necessariamente o mesmo documento ou trecho de `F1` em outra pergunta.
 
-## Fluxo de validação
+## Fluxo
 
 ```text
 Pergunta
    ↓
 Busca local
    ↓
-Seleção de documentos e trechos
+Trechos candidatos
    ↓
-Criação local das fontes F1, F2, F3...
+Criação de F1, F2, F3...
    ↓
-Revisão e autorização do usuário
+Revisão
    ↓
-Envio ao Gemini
+Autorização
+   ↓
+Gemini
    ↓
 Resposta JSON estruturada
    ↓
-Validação local das fontes e citações
+Validação local
    ↓
-Apresentação da resposta
+Apresentação
 ```
 
-A resposta esperada do modelo segue uma estrutura equivalente a:
+A resposta esperada segue estrutura equivalente a:
 
 ```json
 {
@@ -109,99 +164,76 @@ A resposta esperada do modelo segue uma estrutura equivalente a:
 }
 ```
 
-Os estados aceitos são:
+Estados aceitos:
 
 | Status | Significado |
 | --- | --- |
-| `respondida` | Os itens apresentados possuem evidências. |
-| `parcial` | Somente parte da pergunta pôde ser respondida com evidências. |
-| `sem_evidencia` | Nenhuma orientação pôde ser fundamentada nos trechos enviados. |
+| `respondida` | Existem itens fundamentados nas evidências. |
+| `parcial` | Somente parte da pergunta pôde ser respondida. |
+| `sem_evidencia` | Nenhuma orientação pôde ser fundamentada. |
 
-Quando não existe evidência suficiente, a aplicação mostra uma mensagem definida localmente:
+Quando não existe evidência suficiente:
 
 ```text
 Não encontrei essa informação nos trechos consultados.
 ```
 
-O modelo não pode substituir essa mensagem por uma orientação livre.
+Essa mensagem é definida pela aplicação.
 
-## O que é conferido localmente
+## Validação local
 
-Antes de uma resposta ser exibida, a aplicação verifica se:
+Antes da apresentação, a aplicação verifica:
 
 ```text
-o JSON possui uma estrutura aceita;
-o status é permitido;
-cada orientação possui pelo menos uma evidência;
-o fonte_id pertence à consulta atual;
-a citação não está vazia;
-a passagem citada existe no trecho relacionado à fonte;
-uma resposta sem evidência não contém orientações;
-uma resposta respondida ou parcial possui itens fundamentados.
+JSON válido;
+status permitido;
+estrutura esperada;
+existência da fonte;
+fonte pertencente à consulta atual;
+citação não vazia;
+citação contida no trecho correspondente;
+orientação acompanhada de evidência;
+ausência de itens em sem_evidencia.
 ```
 
-A comparação das passagens permite somente normalização de espaços e quebras de linha.
+A comparação normaliza apenas espaços e quebras de linha.
 
-Números, palavras, negações e demais conteúdos não são alterados para tentar fazer uma citação parecer válida.
-
-Por exemplo, se o documento contém:
+Não existe correção aproximada de:
 
 ```text
+palavras;
+números;
+negações;
+datas;
+valores.
+```
+
+Exemplo:
+
+```text
+Documento:
 O prazo é de 5 dias úteis.
-```
 
-uma evidência com:
-
-```text
+Citação:
 O prazo é de 10 dias úteis.
+
+Resultado:
+REJEITADA
 ```
-
-é rejeitada.
-
-Da mesma forma:
-
-```text
-O documento não precisa ser assinado.
-```
-
-não valida:
-
-```text
-O documento precisa ser assinado.
-```
-
-## Respostas inválidas
-
-Se o modelo retornar:
-
-```text
-JSON inválido;
-resposta interrompida;
-fonte inexistente;
-citação inventada;
-orientação sem evidência;
-estrutura inesperada.
-```
-
-a resposta não é considerada aprovada.
-
-O texto bruto não é apresentado como se fosse uma resposta válida e não é salvo no histórico estruturado.
-
-A aplicação também não realiza automaticamente uma segunda chamada ao Gemini para tentar corrigir a resposta.
 
 ## Limite da validação
 
-A validação comprova que:
+A validação confirma que:
 
 ```text
-a referência existe;
+a fonte existe;
 a fonte pertence à consulta;
-a passagem citada realmente aparece no trecho enviado.
+a passagem citada aparece no trecho.
 ```
 
-Ela não comprova que a interpretação feita pela IA é necessariamente correta.
+Ela não comprova que a interpretação da IA está necessariamente correta.
 
-Por isso a interface apresenta o aviso:
+Por isso a aplicação informa:
 
 ```text
 Referências conferidas quanto à existência e ao trecho.
@@ -210,9 +242,9 @@ A interpretação da resposta ainda exige revisão.
 
 # Localização das fontes
 
-As buscas preservam a posição do trecho dentro do texto original sempre que possível.
+As buscas preservam a posição dos trechos sempre que possível.
 
-O objeto `TrechoCandidato` registra:
+`TrechoCandidato` registra:
 
 ```text
 texto
@@ -221,11 +253,9 @@ fim
 indice_recorte
 ```
 
-O número de um recorte da busca semântica não é tratado como número de página.
+## PDF
 
-## PDFs
-
-A extração de PDFs preserva marcadores como:
+Marcadores de página são mantidos:
 
 ```text
 [Página 1]
@@ -233,30 +263,9 @@ A extração de PDFs preserva marcadores como:
 [Página 3]
 ```
 
-Quando uma página possui texto extraível, esse conteúdo é utilizado diretamente.
+Isso permite localizar citações quando a posição é confiável.
 
-Quando a página não possui texto extraível, o sistema tenta OCR somente naquela página.
-
-Exemplo:
-
-```text
-[Página 2]
-[Extração: OCR]
-Texto reconhecido na página digitalizada.
-```
-
-Isso permite trabalhar também com PDFs mistos:
-
-```text
-Página 1 → texto nativo
-Página 2 → OCR
-Página 3 → texto nativo
-Página 4 → OCR
-```
-
-O número de página permanece associado ao conteúdo extraído.
-
-Quando os marcadores de página são confiáveis, as citações podem informar:
+Exemplos:
 
 ```text
 Página 3
@@ -268,41 +277,27 @@ ou:
 Páginas 3-4
 ```
 
-## TXT, DOCX, imagens e Google Docs exportado
-
-TXT, DOCX e Google Docs exportados não recebem paginação inventada.
-
-A localização pode ser apresentada como:
-
-```text
-Sem paginação neste formato.
-```
-
-Imagens também não possuem paginação própria.
-
-O conteúdo reconhecido é armazenado como texto extraído.
+O número interno de um recorte semântico não é considerado número de página.
 
 # OCR local
 
-A camada de OCR está implementada em:
+O módulo:
 
 ```text
 ocr.py
 ```
 
-O objetivo é permitir que o assistente trabalhe também com arquivos cujo texto não pode ser obtido diretamente.
+permite trabalhar com imagens e páginas digitalizadas.
 
-O OCR é executado localmente no computador.
-
-A implementação utiliza:
+Tecnologias:
 
 ```text
-RapidOCR;
-ONNX Runtime;
-PyMuPDF.
+RapidOCR
+ONNX Runtime
+PyMuPDF
 ```
 
-## Formatos de imagem aceitos
+## Formatos aceitos
 
 ```text
 PNG
@@ -314,31 +309,25 @@ TIFF
 WEBP
 ```
 
-## PDF digitalizado
+## PDFs digitalizados
 
-Para PDFs, a aplicação tenta primeiro a extração textual normal.
-
-Fluxo:
+O sistema tenta primeiro a extração textual comum.
 
 ```text
-Página do PDF
-      ↓
-Existe texto extraível?
-   ↙             ↘
- Sim             Não
-  ↓               ↓
-Usa texto       Renderiza página
-nativo            ↓
-                  OCR
-                   ↓
-             Texto reconhecido
+Página
+   ↓
+Possui texto?
+ ↙       ↘
+Sim      Não
+ ↓        ↓
+Texto   Renderização
+nativo      ↓
+           OCR
 ```
 
-Assim, o OCR não é executado desnecessariamente em todas as páginas.
+Assim, OCR é utilizado somente quando necessário.
 
-## PDFs mistos
-
-Um mesmo PDF pode conter páginas normais e páginas digitalizadas.
+## PDF misto
 
 Exemplo:
 
@@ -354,78 +343,35 @@ Texto reconhecido pelo OCR.
 Texto extraído normalmente.
 ```
 
-## Imagens
-
-Imagens são processadas diretamente pelo OCR:
+## Limites
 
 ```text
-Imagem
-   ↓
-RapidOCR
-   ↓
-Texto reconhecido
-   ↓
-Prévia para revisão
-   ↓
-Confirmação
-   ↓
-Cópia TXT na base
+DPI padrão: 200
+DPI permitido: 72 a 300
+Máximo: 25.000.000 de pixels por página renderizada
 ```
 
-O conteúdo recebe a indicação:
+PDFs protegidos continuam sendo recusados.
 
-```text
-[Extração: OCR]
-```
+## Revisão
 
-## Revisão obrigatória
-
-OCR não é considerado uma transcrição perfeita.
-
-Ele pode interpretar incorretamente:
+OCR pode interpretar incorretamente:
 
 ```text
 letras;
 números;
 datas;
-pontuação;
 acentos;
+valores;
 nomes;
-palavras;
-valores.
+pontuação.
 ```
 
-A aplicação não faz correção automática do conteúdo reconhecido.
-
-Isso evita transformar uma leitura incerta em texto aparentemente correto.
-
-No painel de importação, o usuário recebe um aviso para conferir o resultado com o documento original antes de adicioná-lo à base.
-
-## Confiança do OCR
-
-O módulo também consegue calcular uma confiança média quando o mecanismo fornece scores válidos.
-
-Essa informação é auxiliar.
-
-Ela não significa que o texto esteja correto e não substitui revisão humana.
-
-## Limites de OCR
-
-Para páginas de PDF:
-
-```text
-DPI padrão: 200
-DPI permitido: 72 a 300
-Limite interno: 25.000.000 de pixels por página renderizada
-```
-
-Páginas que excedam os limites são recusadas.
-
-PDFs protegidos por senha continuam sendo recusados.
+A aplicação não corrige automaticamente o conteúdo reconhecido.
 
 # Modos de busca
 
-A aplicação possui três estratégias de recuperação de documentos.
+Existem três estratégias:
 
 ```text
 Por palavras
@@ -433,15 +379,13 @@ Por significado (local)
 Híbrida (palavras + significado)
 ```
 
-As três devolvem o mesmo contrato interno:
+Todas retornam o mesmo contrato interno:
 
 ```text
-documento;
-texto original;
-lista de TrechoCandidato.
+arquivo
+texto original
+lista de TrechoCandidato
 ```
-
-Isso permite que citações, Gemini e interfaces funcionem da mesma forma independentemente da busca utilizada.
 
 # Busca por palavras
 
@@ -451,49 +395,29 @@ Implementada em:
 busca.py
 ```
 
-A busca extrai palavras da pergunta, remove alguns termos comuns e ordena os documentos pela quantidade de palavras distintas em comum.
+Classifica documentos de acordo com palavras distintas em comum com a pergunta.
 
-Exemplo:
+Características:
 
 ```text
-Pergunta:
-Como solicitar material?
-
-Documento A:
-Material disponível.
-
-Documento B:
-Para solicitar material, informe o setor.
-
-Resultado:
-Documento B
-Documento A
+desconsidera maiúsculas;
+desconsidera minúsculas;
+desconsidera acentos;
+preserva posições dos parágrafos;
+não reconhece sinônimos automaticamente.
 ```
 
-A comparação desconsidera:
+É útil principalmente para:
 
 ```text
-maiúsculas;
-minúsculas;
-acentos.
-```
-
-Sinônimos e flexões não são reconhecidos automaticamente.
-
-A busca lexical é especialmente útil quando a pergunta contém:
-
-```text
-nomes exatos;
+termos exatos;
 siglas;
+nomes;
 códigos;
-termos técnicos;
-números;
-expressões presentes literalmente no documento.
+expressões literais.
 ```
 
-Os parágrafos recuperados preservam, quando possível, sua posição no texto original.
-
-# Busca por significado
+# Busca semântica
 
 Implementada em:
 
@@ -501,71 +425,46 @@ Implementada em:
 busca_semantica.py
 ```
 
-Utiliza Sentence Transformers com o modelo:
+Modelo:
 
 ```text
 intfloat/multilingual-e5-small
 ```
 
-A pergunta e os trechos são transformados em embeddings.
-
-Fluxo simplificado:
+Fluxo:
 
 ```text
 Pergunta
    ↓
-Embedding da pergunta
+Embedding
 
 Documentos
    ↓
 Recortes
    ↓
-Embeddings dos trechos
-
-      ↓
-Comparação vetorial
-      ↓
-Ranking semântico
+Embeddings
+   ↓
+Similaridade
+   ↓
+Ranking
 ```
 
-A busca semântica permite localizar candidatos mesmo quando a pergunta não utiliza exatamente as mesmas palavras do documento.
+Configuração:
 
-Ela localiza candidatos, mas não escreve a resposta.
-
-| Configuração | Limite |
+| Item | Regra |
 | --- | --- |
-| Execução | Processador do computador |
+| Execução | CPU local |
 | Recortes | Até 300 tokens |
 | Sobreposição | 50 tokens |
-| Base da demonstração | Até 500 trechos |
-| Seleção | Até três documentos |
-| Trechos por documento | Até dois |
-| Atualização do índice | Na próxima pesquisa, quando a base mudar |
+| Base de demonstração | Até 500 trechos |
+| Documentos | Até 3 |
+| Trechos por documento | Até 2 |
 
-Os recortes preservam:
-
-```text
-texto;
-posição inicial;
-posição final;
-número interno do recorte.
-```
-
-O número interno do recorte não é apresentado como número de página.
-
-O modelo é preparado em:
+O modelo fica em:
 
 ```text
-.cache_modelos
+.cache_modelos/
 ```
-
-As pesquisas utilizam a cópia local.
-
-O índice fica na memória do processo.
-
-Ainda não existe banco vetorial persistente.
-
-A similaridade calculada não representa probabilidade de acerto.
 
 # Busca híbrida
 
@@ -575,7 +474,7 @@ Implementada em:
 busca_hibrida.py
 ```
 
-A busca híbrida combina:
+Combina:
 
 ```text
 busca por palavras
@@ -583,54 +482,36 @@ busca por palavras
 busca semântica
 ```
 
-O objetivo é aproveitar os pontos fortes das duas estratégias.
+utilizando:
 
-Fluxo:
+```text
+Reciprocal Rank Fusion
+```
+
+ou:
+
+```text
+RRF
+```
+
+## Fluxo
 
 ```text
                 Pergunta
                    ↓
           ┌────────┴────────┐
           ↓                 ↓
- Busca por palavras   Busca semântica
+       Palavras         Semântica
           ↓                 ↓
- Ranking lexical      Ranking vetorial
+    Ranking lexical    Ranking vetorial
           └────────┬────────┘
                    ↓
-        Reciprocal Rank Fusion
+                  RRF
                    ↓
-        Ranking híbrido final
-                   ↓
-             Trechos candidatos
+            Ranking híbrido
 ```
 
-## Reciprocal Rank Fusion
-
-A fusão utiliza Reciprocal Rank Fusion, ou RRF.
-
-A implementação não tenta comparar diretamente:
-
-```text
-quantidade de palavras encontradas
-```
-
-com:
-
-```text
-similaridade vetorial.
-```
-
-Esses valores possuem significados e escalas diferentes.
-
-Em vez disso, o RRF utiliza a posição do documento em cada ranking.
-
-A contribuição segue a ideia:
-
-```text
-peso / (K + posição)
-```
-
-Na implementação atual:
+## Configuração
 
 ```text
 RRF_K = 60
@@ -638,154 +519,462 @@ PESO_PALAVRAS = 1.0
 PESO_SEMANTICA = 1.0
 ```
 
-Isso significa que os dois mecanismos possuem inicialmente o mesmo peso.
-
-## Documento encontrado pelos dois métodos
-
-Um documento recuperado pelas duas estratégias acumula contribuição dos dois rankings.
-
-Exemplo:
+A contribuição segue:
 
 ```text
-Busca por palavras:
-1. documento_A
-2. documento_B
-
-Busca semântica:
-1. documento_B
-2. documento_C
+peso / (K + posição)
 ```
-
-O documento B recebe contribuição das duas buscas e pode subir no ranking final.
-
-## Documento encontrado por apenas um método
-
-Ele não é automaticamente descartado.
-
-Um documento pode continuar no resultado quando aparece somente:
-
-```text
-na busca lexical;
-ou
-na busca semântica.
-```
-
-Isso evita perder documentos que sejam fortes em apenas uma estratégia.
 
 ## Deduplicação
 
-Trechos recuperados pelos dois métodos não são enviados duas vezes.
+Trechos encontrados pelos dois métodos não são enviados duas vezes.
 
-Quando existem posições confiáveis, a deduplicação considera:
-
-```text
-posição inicial;
-posição final;
-texto.
-```
-
-Quando as posições não estão disponíveis, utiliza o texto normalizado somente quanto a espaços.
-
-Não existe correspondência aproximada para deduplicação.
-
-## Prioridade dos trechos
-
-Dentro de cada documento:
+Quando existem posições confiáveis:
 
 ```text
-trechos encontrados pelos dois métodos aparecem primeiro;
-depois entram trechos da busca por palavras;
-depois entram trechos da busca semântica;
-duplicações são descartadas.
+inicio
+fim
+texto
 ```
 
-## Limites da busca híbrida
+são utilizados para a identificação.
 
-Configuração atual:
+## Limites
 
-| Item | Limite |
+| Item | Valor |
 | --- | --- |
 | Documentos finais | Até 3 |
 | Trechos por documento | Até 4 |
 | Peso lexical | 1.0 |
 | Peso semântico | 1.0 |
-| Constante RRF | 60 |
+| RRF K | 60 |
 
-Esses parâmetros são regras da demonstração atual.
+O ranking híbrido não representa probabilidade de acerto.
 
-Eles ainda não foram calibrados com uma base de avaliação de relevância.
+# Avaliação automática
 
-## O que a busca híbrida não significa
+A melhoria de avaliação adiciona uma camada independente para medir o comportamento do assistente.
 
-A posição no ranking híbrido não representa:
-
-```text
-probabilidade de resposta correta;
-percentual de confiança;
-certeza de relevância;
-aprovação do conteúdo;
-qualidade da interpretação da IA.
-```
-
-Por isso as interfaces informam explicitamente:
+Arquivos principais:
 
 ```text
-A busca híbrida combina rankings e não representa
-probabilidade de acerto.
+avaliacao.py
+casos_avaliacao.py
+executar_avaliacao.py
+avaliar_respostas_controladas.py
+avaliar_gemini.py
 ```
+
+# Casos de avaliação
+
+A base de avaliação é definida em:
+
+```text
+casos_avaliacao.py
+```
+
+Ela utiliza documentos exclusivamente fictícios sobre:
+
+```text
+solicitação de material;
+correção de frequência;
+reembolso;
+férias;
+acesso a sistema;
+empréstimo de equipamento.
+```
+
+Atualmente existem:
+
+```text
+12 casos de avaliação
+```
+
+Cada caso pode definir:
+
+```text
+pergunta;
+documento esperado;
+termos obrigatórios;
+termos proibidos;
+status esperado.
+```
+
+Exemplo conceitual:
+
+```text
+Pergunta:
+Como pedir reembolso?
+
+Documento esperado:
+reembolso.txt
+
+Termos obrigatórios:
+nota fiscal
+comprovante de pagamento
+Financeiro
+
+Termos proibidos:
+RH
+
+Status:
+respondida
+```
+
+# Métricas de recuperação
+
+O módulo:
+
+```text
+avaliacao.py
+```
+
+calcula métricas determinísticas.
+
+## Precision
+
+Mede quantos documentos recuperados pertencem ao conjunto esperado.
+
+```text
+documentos relevantes recuperados
+÷
+documentos recuperados
+```
+
+## Recall
+
+Mede quantos documentos esperados foram recuperados.
+
+```text
+documentos relevantes recuperados
+÷
+documentos relevantes esperados
+```
+
+## Reciprocal Rank
+
+Considera a posição do primeiro documento relevante.
+
+```text
+1º lugar = 1.000
+2º lugar = 0.500
+3º lugar = 0.333
+```
+
+## MRR
+
+Mean Reciprocal Rank:
+
+```text
+média dos Reciprocal Ranks
+```
+
+Quanto mais próximo de:
+
+```text
+1.0
+```
+
+melhor a posição dos documentos corretos.
+
+# Benchmark de recuperação
+
+Execute:
+
+```powershell
+python executar_avaliacao.py
+```
+
+Esse benchmark:
+
+```text
+não chama Gemini;
+não usa documentos privados;
+compara palavras, semântica e híbrida;
+mede Precision;
+mede Recall;
+mede MRR.
+```
+
+Em uma execução observada com os 12 casos fictícios:
+
+```text
+palavras:
+aprovação de recuperação: 91,7%
+recall: 0,917
+MRR: 0,819
+
+semântica:
+aprovação de recuperação: 100%
+recall: 1,000
+MRR: 1,000
+
+híbrida:
+aprovação de recuperação: 100%
+recall: 1,000
+MRR: 0,903
+```
+
+Esses números se referem apenas ao conjunto fictício atual.
+
+Eles não devem ser generalizados para outras bases sem novos testes.
+
+# Avaliação controlada de respostas
+
+O módulo:
+
+```text
+avaliar_respostas_controladas.py
+```
+
+testa o mecanismo de avaliação com respostas cujo conteúdo esperado é conhecido antecipadamente.
+
+Ele verifica:
+
+```text
+documento encontrado;
+documento citado;
+citação validada;
+termos obrigatórios;
+termos proibidos;
+status.
+```
+
+Execute:
+
+```powershell
+python avaliar_respostas_controladas.py
+```
+
+A função dessa etapa é validar o avaliador.
+
+Uma taxa de 100% nessa execução não significa que Gemini possui 100% de qualidade.
+
+# Avaliação opcional com Gemini
+
+O módulo:
+
+```text
+avaliar_gemini.py
+```
+
+permite executar os mesmos casos com Gemini real.
+
+Nenhuma chamada acontece sem autorização explícita.
+
+Exemplo:
+
+```powershell
+python avaliar_gemini.py --modo hibrida --limite 2
+```
+
+O programa informa:
+
+```text
+modelo;
+modos;
+quantidade de casos;
+máximo de chamadas.
+```
+
+Depois exige:
+
+```text
+Digite SIM para autorizar essas chamadas:
+```
+
+Sem `SIM`:
+
+```text
+nenhuma chamada ao Gemini é realizada.
+```
+
+## Modos disponíveis
+
+```powershell
+python avaliar_gemini.py --modo palavras
+```
+
+```powershell
+python avaliar_gemini.py --modo semantica
+```
+
+```powershell
+python avaliar_gemini.py --modo hibrida
+```
+
+```powershell
+python avaliar_gemini.py --modo todos
+```
+
+## Limite de casos
+
+Exemplo:
+
+```powershell
+python avaliar_gemini.py --modo hibrida --limite 2
+```
+
+Isso permite validar configuração e cota antes de uma execução maior.
+
+# Resultados reais observados
+
+Uma execução isolada da busca híbrida com os 12 casos fictícios obteve:
+
+```text
+12 casos
+12 aprovados
+0 reprovados
+
+Taxa de aprovação: 100%
+Recall: 1.000
+MRR: 0.903
+Citações válidas: 100%
+Conteúdo válido: 100%
+Status válido: 100%
+```
+
+Modelo utilizado nessa execução:
+
+```text
+gemini-3.5-flash-lite
+```
+
+Esse resultado corresponde somente:
+
+```text
+à versão testada;
+ao modelo utilizado;
+aos 12 casos fictícios;
+ao momento daquela execução.
+```
+
+Não é garantia de desempenho futuro.
+
+# Comparação real dos modos
+
+Uma execução comparativa também foi realizada.
+
+Na parte concluída sem falhas operacionais:
+
+```text
+palavras:
+9/12 aprovados
+75% de aprovação
+Recall: 0.917
+MRR: 0.819
+
+semântica:
+12/12 aprovados
+100% de aprovação
+Recall: 1.000
+MRR: 1.000
+```
+
+A execução híbrida dessa bateria encontrou erros HTTP:
+
+```text
+429 RESOURCE_EXHAUSTED
+```
+
+em parte das chamadas.
+
+Esses erros são problemas de cota/rate limit e não devem ser tratados como reprovação de qualidade.
+
+Por isso o avaliador foi atualizado para separar:
+
+```text
+falhas de qualidade
+```
+
+de:
+
+```text
+falhas operacionais
+```
+
+# Falhas de qualidade x falhas operacionais
+
+A versão atual do avaliador classifica resultados.
+
+## Falha de qualidade
+
+Exemplos:
+
+```text
+documento esperado não recuperado;
+resposta sem evidência quando deveria responder;
+resposta rejeitada pela validação;
+termos obrigatórios ausentes;
+termos proibidos presentes;
+status incorreto;
+citação incorreta.
+```
+
+Esses casos entram no denominador da taxa de aprovação.
+
+## Falha operacional
+
+Exemplos:
+
+```text
+HTTP 429;
+falha de conexão;
+indisponibilidade do serviço;
+erro técnico inesperado;
+falha operacional da busca.
+```
+
+Esses casos são registrados separadamente.
+
+Eles não reduzem artificialmente a taxa de qualidade.
+
+Exemplo:
+
+```text
+Casos planejados: 12
+Casos avaliados: 8
+Falhas operacionais: 4
+
+Aprovados entre os avaliados: 8/8
+
+Taxa de qualidade:
+100%
+```
+
+Isso é diferente de afirmar:
+
+```text
+8/12 = 66,7%
+```
+
+quando os quatro casos restantes nem chegaram a ser avaliados.
+
+# Resultados locais
+
+As execuções reais são salvas em:
+
+```text
+.avaliacoes/
+```
+
+Exemplo:
+
+```text
+.avaliacoes/avaliacao_gemini_20261027T200753Z.json
+```
+
+Essa pasta está no `.gitignore`.
+
+Os resultados não devem ser publicados automaticamente.
+
+A chave da API não é gravada nesses arquivos.
 
 # Interfaces
 
-## Consulta individual — `interface.py`
+## Consulta individual
 
-A consulta individual permite escolher entre:
-
-```text
-Por palavras
-Por significado (local)
-Híbrida (palavras + significado)
-```
-
-O fluxo é:
-
-```text
-Escolher o modo
-       ↓
-Digitar pergunta
-       ↓
-Pesquisar
-       ↓
-Conferir documentos e trechos
-       ↓
-Conferir conteúdo para envio
-       ↓
-Autorizar o envio
-       ↓
-Gerar resposta
-       ↓
-Validar referências
-       ↓
-Exibir resposta e fontes
-```
-
-O modo utilizado é armazenado junto à pesquisa ativa.
-
-Uma nova pesquisa limpa:
-
-```text
-resposta anterior;
-autorização anterior.
-```
-
-A geração continua utilizando o mesmo mecanismo de citações verificáveis.
-
-A busca híbrida altera apenas a recuperação dos candidatos.
-
-Ela não altera as regras de validação da resposta.
-
-## Conversa — `chat.py`
-
-O chat também oferece:
+`interface.py` oferece:
 
 ```text
 Por palavras
@@ -793,16 +982,36 @@ Por significado (local)
 Híbrida (palavras + significado)
 ```
 
-O modo é escolhido antes da conversa.
+Fluxo:
 
-Depois que existe:
+```text
+Escolher modo
+    ↓
+Pergunta
+    ↓
+Busca
+    ↓
+Revisão
+    ↓
+Autorização
+    ↓
+Gemini
+    ↓
+Validação
+    ↓
+Resposta
+```
+
+## Chat
+
+`chat.py` também oferece os três modos.
+
+O modo é bloqueado quando já existe:
 
 ```text
 histórico;
-ou pergunta pendente;
+ou pergunta pendente.
 ```
-
-o modo permanece bloqueado.
 
 Para trocar:
 
@@ -810,95 +1019,52 @@ Para trocar:
 Nova conversa
 ```
 
-Isso evita misturar estratégias diferentes dentro do mesmo contexto sem indicação clara.
-
-## Histórico do modo
-
-A pergunta pendente registra:
-
-```text
-modo_busca
-```
-
-O turno concluído também preserva:
-
-```text
-modo_busca
-```
-
-Assim a sessão mantém informação sobre qual estratégia recuperou os candidatos daquela consulta.
-
-## Autorização
-
-Nenhum modo de busca envia conteúdo ao Gemini por conta própria.
-
-```text
-buscar documentos ≠ enviar para IA
-```
-
-O envio continua dependendo da autorização explícita do usuário.
+O modo utilizado é preservado no turno.
 
 # Memória da conversa
 
-A preparação utiliza:
+A conversa utiliza:
 
 ```text
-a pergunta atual;
-a primeira pergunta da conversa;
-a pergunta respondida mais recente.
+pergunta atual;
+primeira pergunta;
+última pergunta respondida.
 ```
 
-As respostas anteriores da IA não são reenviadas como fontes.
+As respostas anteriores da IA não são utilizadas como fontes.
 
-Essa memória é limitada.
+O histórico é temporário e fica na sessão do navegador.
 
-Referências como:
+Limite atual:
 
 ```text
-explique o segundo item da sua resposta
+10 respostas por conversa
 ```
 
-podem não funcionar adequadamente.
-
-O histórico fica na sessão do navegador, sem banco de dados persistente, e a versão atual permite até 10 respostas por conversa.
-
-Cada turno concluído armazena uma cópia serializável das fontes citadas.
-
-Isso permite reexibir:
-
-```text
-documento;
-trecho;
-localização;
-passagens citadas.
-```
-
-sem consultar novamente a versão atual dos arquivos.
-
-# Importação manual de documentos
-
-Disponível no painel lateral do chat.
+# Importação manual
 
 Fluxo:
 
 ```text
-Selecionar arquivo
-        ↓
-Extrair conteúdo
-        ↓
-OCR quando necessário
-        ↓
-Revisar texto
-        ↓
-Confirmar inclusão
-        ↓
-Salvar cópia TXT local
+arquivo
+  ↓
+extração
+  ↓
+OCR se necessário
+  ↓
+prévia
+  ↓
+revisão
+  ↓
+confirmação
+  ↓
+TXT local
 ```
 
-## Formatos aceitos
+Formatos:
 
 ```text
-TXT em UTF-8
+TXT
 PDF
 DOCX
 PNG
@@ -910,52 +1076,25 @@ TIFF
 WEBP
 ```
 
-## Comportamento por formato
+Limites:
 
-| Formato | Processamento |
+| Item | Limite |
 | --- | --- |
-| TXT | Leitura UTF-8 |
-| DOCX | Extração de parágrafos e tabelas |
-| PDF com texto | Extração normal |
-| PDF digitalizado | OCR nas páginas sem texto |
-| PDF misto | Extração normal + OCR seletivo |
-| Imagem | OCR local |
+| Arquivo | 5 MiB |
+| PDF | 30 páginas |
+| Texto | 100.000 caracteres |
+| DOCX descompactado | 20 MiB |
+| Página OCR | 25 milhões de pixels |
 
-## Limites da conversão
+# Google Drive
 
-| Item | Regra |
-| --- | --- |
-| Arquivo processado | Até 5 MiB |
-| PDF | Até 30 páginas |
-| Texto extraído | Até 100.000 caracteres |
-| PDF protegido | Recusado |
-| Página sem texto | OCR é tentado |
-| Página sem texto reconhecível após OCR | Importação é recusada |
-| DOCX expandido | Limite interno de 20 MiB |
-| DOC antigo | Não aceito |
-| Página renderizada para OCR | Até 25 milhões de pixels |
-
-As cópias manuais utilizam o padrão:
-
-```text
-documentos/importado_nome_identificador.txt
-```
-
-Conteúdos diferentes podem gerar cópias diferentes.
-
-Não há substituição automática de versões nesse modo manual.
-
-# Sincronização com Google Drive
-
-A integração utiliza uma conta de serviço com acesso de leitura a uma pasta exclusiva de demonstração.
-
-## Formatos sincronizados
+A sincronização suporta:
 
 ```text
 TXT
 PDF
 DOCX
-Google Docs exportado como texto
+Google Docs
 PNG
 JPG/JPEG
 BMP
@@ -963,95 +1102,41 @@ TIFF
 WEBP
 ```
 
-Imagens compatíveis são baixadas e processadas por OCR local.
-
-PDFs sincronizados também podem utilizar OCR em páginas digitalizadas.
-
-## Fluxo
+Fluxo:
 
 ```text
-Google Drive
-    ↓
-Listagem
-    ↓
-Seleção dos tipos compatíveis
-    ↓
-Download
-    ↓
-Extração / OCR
-    ↓
-Validação
-    ↓
-Preparação de todas as cópias
-    ↓
-Aplicação da base
+Drive
+ ↓
+listagem
+ ↓
+download
+ ↓
+extração/OCR
+ ↓
+validação
+ ↓
+preparação
+ ↓
+aplicação
 ```
 
-Se um documento compatível falhar antes da aplicação, a sincronização não aplica uma base parcialmente nova.
-
-## Regras da atualização
-
-| Situação | Comportamento |
-| --- | --- |
-| Arquivo novo | Cria uma cópia local |
-| Mesmo ID alterado | Atualiza a cópia correspondente |
-| Mesmo conteúdo | Mantém sem duplicação |
-| Arquivo deixa a pasta | Retira da base ativa e preserva backup |
-| Documento não pode ser lido | Interrompe antes da aplicação |
-| OCR falha | Interrompe antes da aplicação |
-| Cópia local gerenciada foi editada | Interrompe |
-| Arquivo local não gerenciado | Preservado |
-| Pasta configurada muda | Interrompe |
-
-## Estado e backups
+Se um arquivo compatível falhar antes da aplicação:
 
 ```text
-documentos/drive_identificador.txt
-.estado_drive/manifesto.json
+a base nova não é aplicada parcialmente.
+```
+
+Backups:
+
+```text
 .estado_drive/historico/
 ```
 
-A sincronização não altera arquivos no Google Drive.
-
-# Integração com Gemini
-
-O módulo:
+Manifesto:
 
 ```text
-consulta_ia.py
+.estado_drive/manifesto.json
 ```
-
-prepara os trechos e realiza a chamada ao modelo gerador.
-
-| Item | Limite |
-| --- | --- |
-| Pergunta digitada | 500 caracteres |
-| Documentos enviados | Até três candidatos |
-| Contexto | 12.000 caracteres |
-| Saída | JSON estruturado |
-| Tentativas automáticas extras | Nenhuma |
-
-A recuperação de documentos acontece antes da chamada ao Gemini.
-
-```text
-Busca por palavras
-Busca semântica
-Busca híbrida
-        ↓
-Trechos candidatos
-        ↓
-Revisão
-        ↓
-Autorização
-        ↓
-Gemini
-```
-
-O Gemini não escolhe quais documentos entram inicialmente na busca local.
-
-A resposta retornada também não é confiada diretamente.
-
-Antes da apresentação, `citacoes.py` confere as referências contra o registro local.
 
 # Organização do projeto
 
@@ -1061,9 +1146,10 @@ assistente-procedimentos-python/
 │   └── workflows/
 │       └── testes.yml
 ├── documentos/
+├── .cache_modelos/
 ├── .secrets/
 ├── .estado_drive/
-├── .cache_modelos/
+├── .avaliacoes/
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
@@ -1084,6 +1170,11 @@ assistente-procedimentos-python/
 ├── chat.py
 ├── verificar_drive.py
 ├── sincronizar_drive.py
+├── avaliacao.py
+├── casos_avaliacao.py
+├── executar_avaliacao.py
+├── avaliar_respostas_controladas.py
+├── avaliar_gemini.py
 ├── test_app.py
 ├── test_busca.py
 ├── test_busca_semantica.py
@@ -1097,14 +1188,16 @@ assistente-procedimentos-python/
 ├── test_interface.py
 ├── test_chat.py
 ├── test_verificar_drive.py
-└── test_sincronizar_drive.py
+├── test_sincronizar_drive.py
+├── test_avaliacao.py
+├── test_executar_avaliacao.py
+├── test_avaliar_respostas_controladas.py
+└── test_avaliar_gemini.py
 ```
 
-Credenciais, modelos, documentos privados e backups não devem ser publicados.
+# Instalação
 
-# Instalação no Windows
-
-## Clonar e preparar
+## Ambiente virtual
 
 ```powershell
 git clone https://github.com/limaavls/assistente-procedimentos-python.git
@@ -1112,44 +1205,23 @@ cd assistente-procedimentos-python
 python -m venv venv
 ```
 
-## Dependências básicas
+## Dependências principais
 
 ```powershell
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-## Busca semântica e híbrida
-
-A busca híbrida depende da busca semântica.
-
-Instale:
+## Busca semântica
 
 ```powershell
 .\venv\Scripts\python.exe -m pip install -r requirements-semantica.txt
-```
-
-Prepare o modelo:
-
-```powershell
 .\venv\Scripts\python.exe busca_semantica.py
 ```
-
-A busca híbrida reutiliza o mesmo modelo local.
-
-Não existe um segundo modelo específico para ela.
 
 ## OCR
 
 ```powershell
 .\venv\Scripts\python.exe -m pip install -r requirements-ocr.txt
-```
-
-Dependências principais:
-
-```text
-rapidocr
-onnxruntime
-PyMuPDF
 ```
 
 ## Google Drive
@@ -1158,11 +1230,9 @@ PyMuPDF
 .\venv\Scripts\python.exe -m pip install -r requirements-drive.txt
 ```
 
-# Configuração local
+# Configuração
 
-## Gemini
-
-Crie `.env`:
+`.env`:
 
 ```env
 GEMINI_API_KEY=COLE_SUA_CHAVE_AQUI
@@ -1174,7 +1244,7 @@ Opcional:
 GEMINI_MODEL=SEU_MODELO
 ```
 
-## Google Drive
+Drive:
 
 ```env
 DRIVE_FOLDER_ID=ID_DA_PASTA
@@ -1186,232 +1256,182 @@ DRIVE_CREDENTIALS_FILE=.secrets/google-drive.json
 ## Chat
 
 ```powershell
-.\venv\Scripts\python.exe -m streamlit run chat.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
+python -m streamlit run chat.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
-## Consulta individual
+## Interface individual
 
 ```powershell
-.\venv\Scripts\python.exe -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
+python -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
-## Busca literal pelo terminal
+## Benchmark de recuperação
 
 ```powershell
-.\venv\Scripts\python.exe app.py
+python executar_avaliacao.py
 ```
 
-## Consulta com Gemini pelo terminal
+## Benchmark controlado de respostas
 
 ```powershell
-.\venv\Scripts\python.exe consulta_ia.py
+python avaliar_respostas_controladas.py
 ```
 
-## Sincronização do Drive
+## Avaliação real
 
 ```powershell
-.\venv\Scripts\python.exe sincronizar_drive.py
+python avaliar_gemini.py --modo hibrida
 ```
 
-Modo periódico:
+# Proteção no Git
 
-```powershell
-.\venv\Scripts\python.exe sincronizar_drive.py --intervalo 300
+O `.gitignore` inclui:
+
+```gitignore
+.env
+venv/
+.venv/
+__pycache__/
+documentos/importado_*.txt
+documentos/drive_*.txt
+.cache_modelos/
+.secrets/
+.estado_drive/
+.avaliacoes/
+```
+
+Isso protege:
+
+```text
+credenciais;
+modelos locais;
+documentos importados;
+documentos sincronizados;
+backups;
+resultados locais de avaliação.
 ```
 
 # Testes automatizados
 
-Execute toda a suíte:
+Execute:
 
 ```powershell
 python -m unittest discover -v
 ```
 
-A suíte completa foi executada localmente com sucesso após a implementação da busca híbrida.
-
-O número exato de testes deve ser considerado o valor apresentado pela execução atual.
-
-## Testes da busca híbrida
-
-Arquivo:
+Após a implementação da melhoria de avaliação automática, a suíte completa executada localmente apresentou:
 
 ```text
-test_busca_hibrida.py
+Ran 261 tests in 24.143s
+
+OK
 ```
 
-Os cenários incluem:
+Os testes não dependem de:
 
 ```text
-fusão de documentos presentes nas duas buscas;
-documentos recuperados por apenas um mecanismo;
-deduplicação de trechos;
-preservação de posições;
-preservação do índice semântico;
-limite de documentos;
-limite de trechos;
-desempate determinístico;
-entrada vazia;
-ausência de resultados;
-alteração da base durante a fusão;
-contratos incompatíveis;
-limites inválidos.
-```
-
-## Testes de integração
-
-A busca híbrida também é coberta em:
-
-```text
-test_chat.py
-test_interface.py
-```
-
-Esses testes verificam:
-
-```text
-presença do terceiro modo;
-seleção da busca híbrida;
-preservação do modo utilizado;
-preparação das citações;
-autorização antes da IA;
-compatibilidade com respostas validadas;
-avisos sobre o limite da fusão.
-```
-
-## Testes individuais
-
-Busca híbrida:
-
-```powershell
-python -m unittest -v test_busca_hibrida
-```
-
-Busca por palavras:
-
-```powershell
-python -m unittest -v test_busca
-```
-
-Busca semântica:
-
-```powershell
-python -m unittest -v test_busca_semantica
-```
-
-Chat:
-
-```powershell
-python -m unittest -v test_chat
-```
-
-Interface:
-
-```powershell
-python -m unittest -v test_interface
-```
-
-Citações:
-
-```powershell
-python -m unittest -v test_citacoes
-```
-
-OCR:
-
-```powershell
-python -m unittest -v test_ocr
-```
-
-Importação:
-
-```powershell
-python -m unittest -v test_importacao
-```
-
-Painel:
-
-```powershell
-python -m unittest -v test_painel_documentos
-```
-
-Sincronização:
-
-```powershell
-python -m unittest -v test_sincronizar_drive
-```
-
-# GitHub Actions
-
-O workflow executa:
-
-```bash
-python -m unittest discover -v
-```
-
-A suíte deve funcionar sem:
-
-```text
+Gemini real;
+Google Drive real;
 credenciais reais;
-acesso real ao Google Drive;
-chamadas reais ao Gemini;
 documentos privados.
 ```
 
-Os testes semânticos e híbridos automatizados utilizam simulações quando necessário.
+# Cobertura da avaliação
 
-Uma execução verde indica que os cenários configurados passaram.
-
-Isso não significa que toda a aplicação esteja livre de erros.
-
-# Privacidade e limitações
-
-Importação, OCR e buscas são locais.
-
-A sincronização lê os documentos da pasta aprovada e grava suas cópias no computador.
-
-Somente a geração de respostas envia conteúdo ao Gemini.
-
-O usuário pode revisar os trechos antes do envio e precisa autorizar cada consulta.
-
-## A busca híbrida não garante relevância
-
-Mesmo combinando dois métodos, um documento incorreto ainda pode ser selecionado.
-
-O RRF melhora a forma de combinar rankings, mas não prova que:
+Os testes incluem:
 
 ```text
-o primeiro documento é correto;
-o trecho é suficiente;
-a resposta será correta;
-a IA interpretará corretamente o conteúdo.
-```
-
-## A busca híbrida ainda não possui avaliação quantitativa
-
-Ainda não existem métricas documentadas como:
-
-```text
-Precision@K;
-Recall@K;
+Precision;
+Recall;
+Reciprocal Rank;
 MRR;
-nDCG;
-taxa de respostas corretas;
-comparação estatística entre os três modos.
+termos obrigatórios;
+termos proibidos;
+status esperado;
+documento esperado;
+documento citado;
+citações válidas;
+falhas de qualidade;
+falhas operacionais;
+HTTP 429;
+falhas de conexão;
+resultados controlados;
+salvamento sem chave da API;
+comparação dos três modos.
 ```
 
-Esse tipo de avaliação faz parte da evolução planejada do projeto.
+Arquivos principais de teste da melhoria:
 
-## OCR
+```text
+test_avaliacao.py
+test_executar_avaliacao.py
+test_avaliar_respostas_controladas.py
+test_avaliar_gemini.py
+```
 
-OCR também não garante transcrição perfeita.
+# Limitações da avaliação
 
-O texto reconhecido precisa ser revisado.
+Os 12 casos atuais são uma base pequena e fictícia.
 
-## Citações
+Eles servem para:
 
-Citações verificáveis confirmam a existência da passagem, não a qualidade da interpretação.
+```text
+regressão;
+comparação inicial;
+validação da arquitetura;
+demonstração de métricas.
+```
 
-## Recursos ainda não existentes
+Eles não representam:
+
+```text
+benchmark científico;
+garantia de generalização;
+garantia de precisão em documentos reais;
+garantia de qualidade futura do modelo.
+```
+
+Uma avaliação maior deveria incluir:
+
+```text
+mais documentos;
+mais perguntas;
+perguntas ambíguas;
+perguntas sem resposta;
+documentos conflitantes;
+documentos longos;
+documentos semelhantes;
+casos negativos;
+avaliação repetida em diferentes execuções.
+```
+
+# Privacidade
+
+OCR, importação e buscas são locais.
+
+Somente a geração de respostas com Gemini envia os trechos autorizados.
+
+A avaliação real utiliza exclusivamente:
+
+```text
+DOCUMENTOS_AVALIACAO
+```
+
+definidos em:
+
+```text
+casos_avaliacao.py
+```
+
+Ela não utiliza automaticamente:
+
+```text
+documentos/
+```
+
+A chave da API não é salva nos resultados.
+
+# Limitações gerais
 
 O projeto ainda não possui:
 
@@ -1419,10 +1439,10 @@ O projeto ainda não possui:
 autenticação de usuários;
 banco persistente de conversas;
 controle institucional de versões;
-controle automático de vigência;
+controle de vigência;
 banco vetorial persistente;
-avaliação automática da qualidade das respostas;
-dashboard de métricas;
+dashboard visual de métricas;
+n8n integrado;
 deploy em Docker;
 garantia de resposta correta.
 ```
@@ -1432,33 +1452,25 @@ garantia de resposta correta.
 | Melhoria | Situação |
 | --- | --- |
 | Conversa com contexto | Concluída |
-| Importação de TXT, PDF e DOCX | Concluída |
-| Busca semântica local | Concluída |
-| Sincronização de pasta aprovada no Google Drive | Concluída |
+| Importação TXT/PDF/DOCX | Concluída |
+| Busca semântica | Concluída |
+| Sincronização Google Drive | Concluída |
 | Citações verificáveis | Concluída |
-| OCR para PDFs digitalizados e imagens | Concluída |
+| OCR | Concluída |
 | Busca híbrida | Concluída |
+| Avaliação automática da qualidade | Concluída |
 
-# Próximas melhorias planejadas
+# Próximas melhorias
 
 | Ordem | Melhoria | Situação |
 | --- | --- | --- |
 | 1 | Citações verificáveis | Concluída |
-| 2 | OCR para PDFs digitalizados e imagens | Concluída |
+| 2 | OCR | Concluída |
 | 3 | Busca híbrida | Concluída |
-| 4 | Avaliação automática da qualidade da IA | Próxima etapa |
-| 5 | Integração com n8n e automações | Planejada |
+| 4 | Avaliação automática da qualidade | Concluída |
+| 5 | Integração com n8n e automações | Próxima etapa |
 | 6 | Dashboard de métricas | Planejada |
 | 7 | Docker e demonstração online | Planejada |
-
-A próxima etapa será especialmente importante porque permitirá medir, em vez de apenas assumir, a qualidade de:
-
-```text
-recuperação de documentos;
-citações;
-respostas;
-comparação entre palavras, semântica e híbrida.
-```
 
 # Referências
 
