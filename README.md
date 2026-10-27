@@ -2,7 +2,7 @@
 
 Aplicação em Python para pesquisar procedimentos administrativos, consultar documentos e gerar respostas opcionais com a Gemini API.
 
-O projeto possui interface de consulta, conversa com contexto limitado, importação de documentos, OCR local para imagens e PDFs digitalizados, busca por palavras, busca semântica local, busca híbrida, sincronização com uma pasta aprovada no Google Drive, respostas com citações verificáveis e uma camada de avaliação automática da qualidade da recuperação e das respostas.
+O projeto possui interface de consulta, conversa com contexto limitado, importação de documentos, OCR local para imagens e PDFs digitalizados, busca por palavras, busca semântica local, busca híbrida, sincronização com uma pasta aprovada no Google Drive, respostas com citações verificáveis, avaliação automática da qualidade e dashboard local de métricas.
 
 > Projeto de estudo e portfólio. Utilize somente documentos fictícios. A aplicação não representa procedimentos oficiais de uma instituição.
 
@@ -24,6 +24,7 @@ integração com Google Drive;
 validação local de citações;
 avaliação automática;
 métricas de recuperação;
+dashboard de métricas;
 testes automatizados.
 ```
 
@@ -51,6 +52,9 @@ A aplicação não aprova solicitações nem substitui a conferência dos proced
 | Benchmark controlado | Testa o avaliador sem chamar Gemini. |
 | Benchmark real opcional | Executa casos fictícios com Gemini após autorização explícita. |
 | Separação de falhas | Diferencia falhas de qualidade de falhas operacionais, como HTTP 429. |
+| Dashboard de métricas | Exibe KPIs, histórico, comparação entre modos e falhas operacionais. |
+| Compatibilidade histórica | O dashboard interpreta resultados gerados antes e depois da separação de falhas operacionais. |
+| Filtros do dashboard | Permite filtrar avaliações por modo de busca e modelo. |
 | Verificação do Drive | Confirma acesso e lista itens da pasta aprovada. |
 | Sincronização do Drive | Criação, atualização e retirada de cópias locais gerenciadas. |
 | OCR no Drive | Imagens e PDFs digitalizados compatíveis podem entrar na base sincronizada. |
@@ -96,6 +100,10 @@ Validação local das citações
 Resposta apresentada
    ↓
 Avaliação opcional
+   ↓
+Resultados locais em JSON
+   ↓
+Dashboard de métricas
 ```
 
 # Citações verificáveis
@@ -553,7 +561,7 @@ O ranking híbrido não representa probabilidade de acerto.
 
 # Avaliação automática
 
-A melhoria de avaliação adiciona uma camada independente para medir o comportamento do assistente.
+A camada de avaliação mede o comportamento do assistente de maneira independente.
 
 Arquivos principais:
 
@@ -881,7 +889,7 @@ em parte das chamadas.
 
 Esses erros são problemas de cota/rate limit e não devem ser tratados como reprovação de qualidade.
 
-Por isso o avaliador foi atualizado para separar:
+Por isso o avaliador separa:
 
 ```text
 falhas de qualidade
@@ -894,8 +902,6 @@ falhas operacionais
 ```
 
 # Falhas de qualidade x falhas operacionais
-
-A versão atual do avaliador classifica resultados.
 
 ## Falha de qualidade
 
@@ -969,6 +975,208 @@ Essa pasta está no `.gitignore`.
 Os resultados não devem ser publicados automaticamente.
 
 A chave da API não é gravada nesses arquivos.
+
+# Dashboard de métricas
+
+O dashboard foi implementado em:
+
+```text
+dashboard_metricas.py
+```
+
+A leitura e consolidação dos resultados ficam em:
+
+```text
+metricas_dashboard.py
+```
+
+O painel utiliza os JSONs locais presentes em:
+
+```text
+.avaliacoes/
+```
+
+e não realiza chamadas ao Gemini nem ao Google Drive ao ser aberto.
+
+## Executar o dashboard
+
+```powershell
+python -m streamlit run dashboard_metricas.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
+```
+
+O endereço local normalmente será:
+
+```text
+http://127.0.0.1:8501
+```
+
+# Indicadores do dashboard
+
+O painel apresenta:
+
+```text
+quantidade de execuções;
+casos avaliados;
+falhas operacionais;
+taxa média de aprovação;
+Precision média;
+Recall médio;
+MRR médio;
+taxa de citações válidas;
+taxa de conteúdo válido;
+taxa de status válido;
+quantidade de arquivos de avaliação.
+```
+
+# Comparação entre modos
+
+O dashboard compara a execução mais recente disponível de cada modo:
+
+```text
+palavras;
+semântica;
+híbrida.
+```
+
+São exibidos:
+
+```text
+Aprovação;
+Precision;
+Recall;
+MRR;
+Citações;
+Conteúdo;
+Falhas operacionais.
+```
+
+Também existe uma visualização em gráfico para facilitar a comparação.
+
+# Filtros do dashboard
+
+Na barra lateral é possível filtrar por:
+
+```text
+modo de busca;
+modelo de IA.
+```
+
+Exemplo:
+
+```text
+Modo:
+semantica
+
+Modelo:
+gemini-3.5-flash-lite
+```
+
+Os KPIs, tabelas e comparações são recalculados localmente de acordo com o filtro.
+
+# Histórico das avaliações
+
+O dashboard exibe uma tabela com:
+
+```text
+data;
+modo;
+modelo;
+casos planejados;
+casos avaliados;
+falhas operacionais;
+aprovados;
+reprovados;
+taxa de aprovação;
+Precision;
+Recall;
+MRR;
+citações válidas;
+conteúdo válido;
+status válido;
+arquivo de origem.
+```
+
+# Compatibilidade com avaliações antigas
+
+Algumas avaliações foram geradas antes de `avaliar_gemini.py` possuir os campos:
+
+```text
+total_planejado;
+avaliados;
+falhas_operacionais.
+```
+
+O módulo:
+
+```text
+metricas_dashboard.py
+```
+
+detecta automaticamente os dois formatos.
+
+## Formato atual
+
+```text
+modo
+total_planejado
+avaliados
+falhas_operacionais
+resumo
+execucoes
+```
+
+## Formato antigo
+
+```text
+modo
+resumo
+execucoes
+```
+
+Quando encontra um arquivo antigo, o dashboard reconstrói as contagens.
+
+Falhas históricas com mensagens como:
+
+```text
+Erro da API (429).
+```
+
+são reconhecidas como falhas operacionais e retiradas do denominador das métricas de qualidade.
+
+Isso evita apresentar, por exemplo:
+
+```text
+8/12 = 66,7%
+```
+
+como qualidade do modelo quando quatro casos não foram avaliados por limite da API.
+
+# Médias do dashboard
+
+As médias do painel são médias simples entre as execuções filtradas.
+
+Elas não são ponderadas pela quantidade de casos.
+
+Exemplo:
+
+```text
+execução A = 80%
+execução B = 100%
+
+média mostrada = 90%
+```
+
+O painel é destinado a:
+
+```text
+acompanhamento;
+comparação;
+regressão;
+demonstração;
+portfólio.
+```
+
+Não constitui benchmark científico.
 
 # Interfaces
 
@@ -1175,6 +1383,8 @@ assistente-procedimentos-python/
 ├── executar_avaliacao.py
 ├── avaliar_respostas_controladas.py
 ├── avaliar_gemini.py
+├── metricas_dashboard.py
+├── dashboard_metricas.py
 ├── test_app.py
 ├── test_busca.py
 ├── test_busca_semantica.py
@@ -1192,7 +1402,9 @@ assistente-procedimentos-python/
 ├── test_avaliacao.py
 ├── test_executar_avaliacao.py
 ├── test_avaliar_respostas_controladas.py
-└── test_avaliar_gemini.py
+├── test_avaliar_gemini.py
+├── test_metricas_dashboard.py
+└── test_dashboard_metricas.py
 ```
 
 # Instalação
@@ -1265,6 +1477,12 @@ python -m streamlit run chat.py --server.address=127.0.0.1 --browser.gatherUsage
 python -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
+## Dashboard de métricas
+
+```powershell
+python -m streamlit run dashboard_metricas.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
+```
+
 ## Benchmark de recuperação
 
 ```powershell
@@ -1319,10 +1537,10 @@ Execute:
 python -m unittest discover -v
 ```
 
-Após a implementação da melhoria de avaliação automática, a suíte completa executada localmente apresentou:
+Após a implementação do dashboard de métricas, a suíte completa executada localmente apresentou:
 
 ```text
-Ran 261 tests in 24.143s
+Ran 285 tests in 39.298s
 
 OK
 ```
@@ -1336,9 +1554,39 @@ credenciais reais;
 documentos privados.
 ```
 
+# Testes do dashboard
+
+A melhoria inclui:
+
+```text
+test_metricas_dashboard.py
+test_dashboard_metricas.py
+```
+
+Os testes verificam:
+
+```text
+leitura de JSON atual;
+leitura de JSON legado;
+detecção de HTTP 429 histórico;
+separação de falha operacional;
+validação de contagens;
+validação de taxas;
+agregação de arquivos;
+agrupamento por modo;
+seleção da execução mais recente;
+formatação das métricas;
+carregamento do Streamlit;
+filtros por modo;
+filtros por modelo;
+KPIs;
+exibição separada de falhas operacionais;
+comportamento quando não existem avaliações.
+```
+
 # Cobertura da avaliação
 
-Os testes incluem:
+Os testes da camada de avaliação incluem:
 
 ```text
 Precision;
@@ -1357,16 +1605,9 @@ HTTP 429;
 falhas de conexão;
 resultados controlados;
 salvamento sem chave da API;
-comparação dos três modos.
-```
-
-Arquivos principais de teste da melhoria:
-
-```text
-test_avaliacao.py
-test_executar_avaliacao.py
-test_avaliar_respostas_controladas.py
-test_avaliar_gemini.py
+comparação dos três modos;
+dashboard de métricas;
+compatibilidade de resultados históricos.
 ```
 
 # Limitações da avaliação
@@ -1407,7 +1648,7 @@ avaliação repetida em diferentes execuções.
 
 # Privacidade
 
-OCR, importação e buscas são locais.
+OCR, importação, buscas e dashboard são locais.
 
 Somente a geração de respostas com Gemini envia os trechos autorizados.
 
@@ -1431,6 +1672,8 @@ documentos/
 
 A chave da API não é salva nos resultados.
 
+O dashboard apenas lê arquivos locais e não envia os resultados para serviços externos.
+
 # Limitações gerais
 
 O projeto ainda não possui:
@@ -1441,9 +1684,9 @@ banco persistente de conversas;
 controle institucional de versões;
 controle de vigência;
 banco vetorial persistente;
-dashboard visual de métricas;
-n8n integrado;
 deploy em Docker;
+demonstração online;
+integração com n8n;
 garantia de resposta correta.
 ```
 
@@ -1459,8 +1702,11 @@ garantia de resposta correta.
 | OCR | Concluída |
 | Busca híbrida | Concluída |
 | Avaliação automática da qualidade | Concluída |
+| Dashboard de métricas | Concluída |
 
 # Próximas melhorias
+
+A ordem atual do desenvolvimento é:
 
 | Ordem | Melhoria | Situação |
 | --- | --- | --- |
@@ -1468,9 +1714,9 @@ garantia de resposta correta.
 | 2 | OCR | Concluída |
 | 3 | Busca híbrida | Concluída |
 | 4 | Avaliação automática da qualidade | Concluída |
-| 5 | Integração com n8n e automações | Próxima etapa |
-| 6 | Dashboard de métricas | Planejada |
-| 7 | Docker e demonstração online | Planejada |
+| 5 | Dashboard de métricas | Concluída |
+| 6 | Docker e demonstração online | Próxima etapa |
+| 7 | Integração com n8n e automações | Etapa final |
 
 # Referências
 
@@ -1483,6 +1729,7 @@ garantia de resposta correta.
 - PyMuPDF
 - Reciprocal Rank Fusion
 - Streamlit
+- Pandas
 - Python `unittest`
 
 # Autor
