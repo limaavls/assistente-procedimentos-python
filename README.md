@@ -2,9 +2,19 @@
 
 Aplicação em Python para pesquisar procedimentos administrativos, consultar documentos e gerar respostas opcionais com a Gemini API.
 
-O projeto possui interface de consulta, conversa com contexto limitado, importação de documentos, OCR local para imagens e PDFs digitalizados, busca por palavras, busca semântica local, busca híbrida, sincronização com uma pasta aprovada no Google Drive, respostas com citações verificáveis, avaliação automática da qualidade e dashboard local de métricas.
+O projeto possui interface de consulta, conversa com contexto limitado, importação de documentos, OCR local para imagens e PDFs digitalizados, busca por palavras, busca semântica local, busca híbrida, sincronização com uma pasta aprovada no Google Drive, respostas com citações verificáveis, avaliação automática da qualidade, dashboard local de métricas, execução em Docker e demonstração online pública.
 
 > Projeto de estudo e portfólio. Utilize somente documentos fictícios. A aplicação não representa procedimentos oficiais de uma instituição.
+
+# Demonstração online
+
+A versão pública está disponível em:
+
+```text
+https://assistente-procedimentos-victor.streamlit.app/
+```
+
+A demonstração utiliza Streamlit Community Cloud e executa o `chat.py`.
 
 # Objetivo
 
@@ -25,6 +35,8 @@ validação local de citações;
 avaliação automática;
 métricas de recuperação;
 dashboard de métricas;
+Docker;
+deploy online;
 testes automatizados.
 ```
 
@@ -55,6 +67,10 @@ A aplicação não aprova solicitações nem substitui a conferência dos proced
 | Dashboard de métricas | Exibe KPIs, histórico, comparação entre modos e falhas operacionais. |
 | Compatibilidade histórica | O dashboard interpreta resultados gerados antes e depois da separação de falhas operacionais. |
 | Filtros do dashboard | Permite filtrar avaliações por modo de busca e modelo. |
+| Docker | Executa a aplicação em ambiente Linux isolado e reproduzível. |
+| PyTorch CPU-only | Evita dependências CUDA desnecessárias na imagem Docker. |
+| Healthcheck Docker | Valida automaticamente a disponibilidade do Streamlit. |
+| Demo online | Publicação em Streamlit Community Cloud. |
 | Verificação do Drive | Confirma acesso e lista itens da pasta aprovada. |
 | Sincronização do Drive | Criação, atualização e retirada de cópias locais gerenciadas. |
 | OCR no Drive | Imagens e PDFs digitalizados compatíveis podem entrar na base sincronizada. |
@@ -502,23 +518,6 @@ ou:
 RRF
 ```
 
-## Fluxo
-
-```text
-                Pergunta
-                   ↓
-          ┌────────┴────────┐
-          ↓                 ↓
-       Palavras         Semântica
-          ↓                 ↓
-    Ranking lexical    Ranking vetorial
-          └────────┬────────┘
-                   ↓
-                  RRF
-                   ↓
-            Ranking híbrido
-```
-
 ## Configuração
 
 ```text
@@ -526,26 +525,6 @@ RRF_K = 60
 PESO_PALAVRAS = 1.0
 PESO_SEMANTICA = 1.0
 ```
-
-A contribuição segue:
-
-```text
-peso / (K + posição)
-```
-
-## Deduplicação
-
-Trechos encontrados pelos dois métodos não são enviados duas vezes.
-
-Quando existem posições confiáveis:
-
-```text
-inicio
-fim
-texto
-```
-
-são utilizados para a identificação.
 
 ## Limites
 
@@ -557,11 +536,7 @@ são utilizados para a identificação.
 | Peso semântico | 1.0 |
 | RRF K | 60 |
 
-O ranking híbrido não representa probabilidade de acerto.
-
 # Avaliação automática
-
-A camada de avaliação mede o comportamento do assistente de maneira independente.
 
 Arquivos principais:
 
@@ -573,117 +548,24 @@ avaliar_respostas_controladas.py
 avaliar_gemini.py
 ```
 
-# Casos de avaliação
-
-A base de avaliação é definida em:
-
-```text
-casos_avaliacao.py
-```
-
-Ela utiliza documentos exclusivamente fictícios sobre:
-
-```text
-solicitação de material;
-correção de frequência;
-reembolso;
-férias;
-acesso a sistema;
-empréstimo de equipamento.
-```
-
 Atualmente existem:
 
 ```text
 12 casos de avaliação
 ```
 
-Cada caso pode definir:
-
-```text
-pergunta;
-documento esperado;
-termos obrigatórios;
-termos proibidos;
-status esperado.
-```
-
-Exemplo conceitual:
-
-```text
-Pergunta:
-Como pedir reembolso?
-
-Documento esperado:
-reembolso.txt
-
-Termos obrigatórios:
-nota fiscal
-comprovante de pagamento
-Financeiro
-
-Termos proibidos:
-RH
-
-Status:
-respondida
-```
+A base utiliza documentos exclusivamente fictícios.
 
 # Métricas de recuperação
 
-O módulo:
+São calculadas:
 
 ```text
-avaliacao.py
+Precision;
+Recall;
+Reciprocal Rank;
+MRR.
 ```
-
-calcula métricas determinísticas.
-
-## Precision
-
-Mede quantos documentos recuperados pertencem ao conjunto esperado.
-
-```text
-documentos relevantes recuperados
-÷
-documentos recuperados
-```
-
-## Recall
-
-Mede quantos documentos esperados foram recuperados.
-
-```text
-documentos relevantes recuperados
-÷
-documentos relevantes esperados
-```
-
-## Reciprocal Rank
-
-Considera a posição do primeiro documento relevante.
-
-```text
-1º lugar = 1.000
-2º lugar = 0.500
-3º lugar = 0.333
-```
-
-## MRR
-
-Mean Reciprocal Rank:
-
-```text
-média dos Reciprocal Ranks
-```
-
-Quanto mais próximo de:
-
-```text
-1.0
-```
-
-melhor a posição dos documentos corretos.
 
 # Benchmark de recuperação
 
@@ -693,18 +575,7 @@ Execute:
 python executar_avaliacao.py
 ```
 
-Esse benchmark:
-
-```text
-não chama Gemini;
-não usa documentos privados;
-compara palavras, semântica e híbrida;
-mede Precision;
-mede Recall;
-mede MRR.
-```
-
-Em uma execução observada com os 12 casos fictícios:
+Em uma execução observada:
 
 ```text
 palavras:
@@ -725,367 +596,82 @@ MRR: 0,903
 
 Esses números se referem apenas ao conjunto fictício atual.
 
-Eles não devem ser generalizados para outras bases sem novos testes.
-
-# Avaliação controlada de respostas
-
-O módulo:
-
-```text
-avaliar_respostas_controladas.py
-```
-
-testa o mecanismo de avaliação com respostas cujo conteúdo esperado é conhecido antecipadamente.
-
-Ele verifica:
-
-```text
-documento encontrado;
-documento citado;
-citação validada;
-termos obrigatórios;
-termos proibidos;
-status.
-```
-
-Execute:
-
-```powershell
-python avaliar_respostas_controladas.py
-```
-
-A função dessa etapa é validar o avaliador.
-
-Uma taxa de 100% nessa execução não significa que Gemini possui 100% de qualidade.
-
 # Avaliação opcional com Gemini
 
-O módulo:
-
-```text
-avaliar_gemini.py
-```
-
-permite executar os mesmos casos com Gemini real.
-
-Nenhuma chamada acontece sem autorização explícita.
-
-Exemplo:
-
-```powershell
-python avaliar_gemini.py --modo hibrida --limite 2
-```
-
-O programa informa:
-
-```text
-modelo;
-modos;
-quantidade de casos;
-máximo de chamadas.
-```
-
-Depois exige:
-
-```text
-Digite SIM para autorizar essas chamadas:
-```
-
-Sem `SIM`:
-
-```text
-nenhuma chamada ao Gemini é realizada.
-```
-
-## Modos disponíveis
-
-```powershell
-python avaliar_gemini.py --modo palavras
-```
-
-```powershell
-python avaliar_gemini.py --modo semantica
-```
+Execute:
 
 ```powershell
 python avaliar_gemini.py --modo hibrida
 ```
 
+ou:
+
 ```powershell
 python avaliar_gemini.py --modo todos
 ```
 
-## Limite de casos
-
-Exemplo:
-
-```powershell
-python avaliar_gemini.py --modo hibrida --limite 2
-```
-
-Isso permite validar configuração e cota antes de uma execução maior.
-
-# Resultados reais observados
-
-Uma execução isolada da busca híbrida com os 12 casos fictícios obteve:
-
-```text
-12 casos
-12 aprovados
-0 reprovados
-
-Taxa de aprovação: 100%
-Recall: 1.000
-MRR: 0.903
-Citações válidas: 100%
-Conteúdo válido: 100%
-Status válido: 100%
-```
-
-Modelo utilizado nessa execução:
-
-```text
-gemini-3.5-flash-lite
-```
-
-Esse resultado corresponde somente:
-
-```text
-à versão testada;
-ao modelo utilizado;
-aos 12 casos fictícios;
-ao momento daquela execução.
-```
-
-Não é garantia de desempenho futuro.
-
-# Comparação real dos modos
-
-Uma execução comparativa também foi realizada.
-
-Na parte concluída sem falhas operacionais:
-
-```text
-palavras:
-9/12 aprovados
-75% de aprovação
-Recall: 0.917
-MRR: 0.819
-
-semântica:
-12/12 aprovados
-100% de aprovação
-Recall: 1.000
-MRR: 1.000
-```
-
-A execução híbrida dessa bateria encontrou erros HTTP:
-
-```text
-429 RESOURCE_EXHAUSTED
-```
-
-em parte das chamadas.
-
-Esses erros são problemas de cota/rate limit e não devem ser tratados como reprovação de qualidade.
-
-Por isso o avaliador separa:
-
-```text
-falhas de qualidade
-```
-
-de:
-
-```text
-falhas operacionais
-```
+Nenhuma chamada ocorre sem autorização explícita.
 
 # Falhas de qualidade x falhas operacionais
 
-## Falha de qualidade
+Falhas de qualidade entram na taxa de aprovação.
 
 Exemplos:
 
 ```text
 documento esperado não recuperado;
-resposta sem evidência quando deveria responder;
-resposta rejeitada pela validação;
-termos obrigatórios ausentes;
-termos proibidos presentes;
 status incorreto;
-citação incorreta.
+conteúdo esperado ausente;
+citação rejeitada.
 ```
 
-Esses casos entram no denominador da taxa de aprovação.
-
-## Falha operacional
+Falhas operacionais são registradas separadamente.
 
 Exemplos:
 
 ```text
 HTTP 429;
 falha de conexão;
-indisponibilidade do serviço;
-erro técnico inesperado;
-falha operacional da busca.
+indisponibilidade da API;
+erro técnico.
 ```
-
-Esses casos são registrados separadamente.
-
-Eles não reduzem artificialmente a taxa de qualidade.
-
-Exemplo:
-
-```text
-Casos planejados: 12
-Casos avaliados: 8
-Falhas operacionais: 4
-
-Aprovados entre os avaliados: 8/8
-
-Taxa de qualidade:
-100%
-```
-
-Isso é diferente de afirmar:
-
-```text
-8/12 = 66,7%
-```
-
-quando os quatro casos restantes nem chegaram a ser avaliados.
 
 # Resultados locais
 
-As execuções reais são salvas em:
+As avaliações reais são salvas em:
 
 ```text
 .avaliacoes/
 ```
 
-Exemplo:
-
-```text
-.avaliacoes/avaliacao_gemini_20261027T200753Z.json
-```
-
 Essa pasta está no `.gitignore`.
-
-Os resultados não devem ser publicados automaticamente.
-
-A chave da API não é gravada nesses arquivos.
 
 # Dashboard de métricas
 
-O dashboard foi implementado em:
+O dashboard está em:
 
 ```text
 dashboard_metricas.py
 ```
 
-A leitura e consolidação dos resultados ficam em:
+e a camada de leitura em:
 
 ```text
 metricas_dashboard.py
 ```
 
-O painel utiliza os JSONs locais presentes em:
-
-```text
-.avaliacoes/
-```
-
-e não realiza chamadas ao Gemini nem ao Google Drive ao ser aberto.
-
-## Executar o dashboard
+Execute:
 
 ```powershell
 python -m streamlit run dashboard_metricas.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
-O endereço local normalmente será:
-
-```text
-http://127.0.0.1:8501
-```
-
-# Indicadores do dashboard
-
 O painel apresenta:
 
 ```text
-quantidade de execuções;
+execuções;
 casos avaliados;
 falhas operacionais;
-taxa média de aprovação;
-Precision média;
-Recall médio;
-MRR médio;
-taxa de citações válidas;
-taxa de conteúdo válido;
-taxa de status válido;
-quantidade de arquivos de avaliação.
-```
-
-# Comparação entre modos
-
-O dashboard compara a execução mais recente disponível de cada modo:
-
-```text
-palavras;
-semântica;
-híbrida.
-```
-
-São exibidos:
-
-```text
-Aprovação;
-Precision;
-Recall;
-MRR;
-Citações;
-Conteúdo;
-Falhas operacionais.
-```
-
-Também existe uma visualização em gráfico para facilitar a comparação.
-
-# Filtros do dashboard
-
-Na barra lateral é possível filtrar por:
-
-```text
-modo de busca;
-modelo de IA.
-```
-
-Exemplo:
-
-```text
-Modo:
-semantica
-
-Modelo:
-gemini-3.5-flash-lite
-```
-
-Os KPIs, tabelas e comparações são recalculados localmente de acordo com o filtro.
-
-# Histórico das avaliações
-
-O dashboard exibe uma tabela com:
-
-```text
-data;
-modo;
-modelo;
-casos planejados;
-casos avaliados;
-falhas operacionais;
-aprovados;
-reprovados;
 taxa de aprovação;
 Precision;
 Recall;
@@ -1093,206 +679,222 @@ MRR;
 citações válidas;
 conteúdo válido;
 status válido;
-arquivo de origem.
+histórico;
+comparação entre modos.
 ```
 
-# Compatibilidade com avaliações antigas
+O dashboard também possui compatibilidade com arquivos antigos de avaliação.
 
-Algumas avaliações foram geradas antes de `avaliar_gemini.py` possuir os campos:
+# Docker
+
+O projeto possui suporte a execução em container através de:
 
 ```text
-total_planejado;
-avaliados;
-falhas_operacionais.
+Dockerfile
+.dockerignore
+requirements-demo.txt
 ```
 
-O módulo:
+A imagem utiliza:
 
 ```text
-metricas_dashboard.py
+python:3.12-slim
 ```
 
-detecta automaticamente os dois formatos.
+# PyTorch CPU-only
 
-## Formato atual
+A imagem Docker instala PyTorch pela distribuição CPU-only:
 
 ```text
-modo
-total_planejado
-avaliados
-falhas_operacionais
-resumo
-execucoes
+https://download.pytorch.org/whl/cpu
 ```
 
-## Formato antigo
+Isso evita dependências CUDA desnecessárias em um ambiente sem GPU.
+
+Na comparação local, a otimização reduziu aproximadamente:
 
 ```text
-modo
-resumo
-execucoes
+Imagem anterior:
+Disk usage: 11,4 GB
+Content size: 3,82 GB
+
+Imagem CPU-only:
+Disk usage: 3,86 GB
+Content size: aproximadamente 999 MB
 ```
 
-Quando encontra um arquivo antigo, o dashboard reconstrói as contagens.
+Os números podem variar conforme cache e versão das dependências.
 
-Falhas históricas com mensagens como:
+# Build Docker
+
+Execute:
+
+```powershell
+docker build -t assistente-procedimentos .
+```
+
+Para reconstrução completa:
+
+```powershell
+docker build --no-cache -t assistente-procedimentos .
+```
+
+# Executar Docker
+
+Com variáveis do `.env` local:
+
+```powershell
+docker run --name assistente-procedimentos-container --rm --env-file .env -p 8501:8501 assistente-procedimentos
+```
+
+Depois acesse:
 
 ```text
-Erro da API (429).
+http://127.0.0.1:8501
 ```
 
-são reconhecidas como falhas operacionais e retiradas do denominador das métricas de qualidade.
+# Healthcheck Docker
 
-Isso evita apresentar, por exemplo:
+O Dockerfile utiliza:
 
 ```text
-8/12 = 66,7%
+/_stcore/health
 ```
 
-como qualidade do modelo quando quatro casos não foram avaliados por limite da API.
+para verificar se o Streamlit está respondendo.
 
-# Médias do dashboard
+Consulte com:
 
-As médias do painel são médias simples entre as execuções filtradas.
+```powershell
+docker inspect --format='{{.State.Health.Status}}' assistente-procedimentos-container
+```
 
-Elas não são ponderadas pela quantidade de casos.
-
-Exemplo:
+Resultado esperado:
 
 ```text
-execução A = 80%
-execução B = 100%
-
-média mostrada = 90%
+healthy
 ```
 
-O painel é destinado a:
+# Testes dentro do container
+
+A suíte também pode ser executada dentro da imagem Linux:
+
+```powershell
+docker exec assistente-procedimentos-container python -m unittest discover -v
+```
+
+Durante o desenvolvimento, uma execução dentro do container apresentou:
 
 ```text
-acompanhamento;
-comparação;
-regressão;
-demonstração;
-portfólio.
+Ran 300 tests in 15.673s
+
+OK
 ```
 
-Não constitui benchmark científico.
+# Dependências para deploy
+
+A organização atual é:
+
+```text
+requirements.txt
+├── dependências principais
+├── requirements-semantica.txt
+└── requirements-ocr.txt
+```
+
+`requirements-semantica.txt`:
+
+```text
+sentence-transformers
+```
+
+`requirements-ocr.txt`:
+
+```text
+RapidOCR
+ONNX Runtime
+PyMuPDF
+```
+
+`requirements-demo.txt`:
+
+```text
+-r requirements.txt
+```
+
+# Pacotes Linux
+
+Para ambientes de deploy Linux, o projeto contém:
+
+```text
+packages.txt
+```
+
+com:
+
+```text
+libgl1
+libglib2.0-0
+```
+
+# Demonstração online
+
+A aplicação está publicada no Streamlit Community Cloud:
+
+```text
+https://assistente-procedimentos-victor.streamlit.app/
+```
+
+Configuração utilizada:
+
+```text
+Repository:
+limaavls/assistente-procedimentos-python
+
+Branch:
+main
+
+Main file:
+chat.py
+
+Python:
+3.12
+```
+
+# Secrets do deploy
+
+A chave Gemini não fica no GitHub.
+
+Ela é configurada no painel de Secrets do Streamlit:
+
+```toml
+GEMINI_API_KEY = "CHAVE_CONFIGURADA_NO_STREAMLIT"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+```
+
+Nunca publique a chave real no README ou no código.
 
 # Interfaces
 
-## Consulta individual
-
-`interface.py` oferece:
-
-```text
-Por palavras
-Por significado (local)
-Híbrida (palavras + significado)
-```
-
-Fluxo:
-
-```text
-Escolher modo
-    ↓
-Pergunta
-    ↓
-Busca
-    ↓
-Revisão
-    ↓
-Autorização
-    ↓
-Gemini
-    ↓
-Validação
-    ↓
-Resposta
-```
-
 ## Chat
 
-`chat.py` também oferece os três modos.
+Execute localmente:
 
-O modo é bloqueado quando já existe:
-
-```text
-histórico;
-ou pergunta pendente.
+```powershell
+python -m streamlit run chat.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
-Para trocar:
+## Consulta individual
 
-```text
-Nova conversa
+```powershell
+python -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
 
-O modo utilizado é preservado no turno.
+## Dashboard
 
-# Memória da conversa
-
-A conversa utiliza:
-
-```text
-pergunta atual;
-primeira pergunta;
-última pergunta respondida.
+```powershell
+python -m streamlit run dashboard_metricas.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
 ```
-
-As respostas anteriores da IA não são utilizadas como fontes.
-
-O histórico é temporário e fica na sessão do navegador.
-
-Limite atual:
-
-```text
-10 respostas por conversa
-```
-
-# Importação manual
-
-Fluxo:
-
-```text
-arquivo
-  ↓
-extração
-  ↓
-OCR se necessário
-  ↓
-prévia
-  ↓
-revisão
-  ↓
-confirmação
-  ↓
-TXT local
-```
-
-Formatos:
-
-```text
-TXT
-PDF
-DOCX
-PNG
-JPG
-JPEG
-BMP
-TIF
-TIFF
-WEBP
-```
-
-Limites:
-
-| Item | Limite |
-| --- | --- |
-| Arquivo | 5 MiB |
-| PDF | 30 páginas |
-| Texto | 100.000 caracteres |
-| DOCX descompactado | 20 MiB |
-| Página OCR | 25 milhões de pixels |
 
 # Google Drive
 
@@ -1308,30 +910,6 @@ JPG/JPEG
 BMP
 TIFF
 WEBP
-```
-
-Fluxo:
-
-```text
-Drive
- ↓
-listagem
- ↓
-download
- ↓
-extração/OCR
- ↓
-validação
- ↓
-preparação
- ↓
-aplicação
-```
-
-Se um arquivo compatível falhar antes da aplicação:
-
-```text
-a base nova não é aplicada parcialmente.
 ```
 
 Backups:
@@ -1358,12 +936,16 @@ assistente-procedimentos-python/
 ├── .secrets/
 ├── .estado_drive/
 ├── .avaliacoes/
+├── .dockerignore
 ├── .gitignore
+├── Dockerfile
 ├── README.md
+├── packages.txt
 ├── requirements.txt
 ├── requirements-semantica.txt
 ├── requirements-drive.txt
 ├── requirements-ocr.txt
+├── requirements-demo.txt
 ├── app.py
 ├── busca.py
 ├── busca_semantica.py
@@ -1404,129 +986,8 @@ assistente-procedimentos-python/
 ├── test_avaliar_respostas_controladas.py
 ├── test_avaliar_gemini.py
 ├── test_metricas_dashboard.py
-└── test_dashboard_metricas.py
-```
-
-# Instalação
-
-## Ambiente virtual
-
-```powershell
-git clone https://github.com/limaavls/assistente-procedimentos-python.git
-cd assistente-procedimentos-python
-python -m venv venv
-```
-
-## Dependências principais
-
-```powershell
-.\venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-## Busca semântica
-
-```powershell
-.\venv\Scripts\python.exe -m pip install -r requirements-semantica.txt
-.\venv\Scripts\python.exe busca_semantica.py
-```
-
-## OCR
-
-```powershell
-.\venv\Scripts\python.exe -m pip install -r requirements-ocr.txt
-```
-
-## Google Drive
-
-```powershell
-.\venv\Scripts\python.exe -m pip install -r requirements-drive.txt
-```
-
-# Configuração
-
-`.env`:
-
-```env
-GEMINI_API_KEY=COLE_SUA_CHAVE_AQUI
-```
-
-Opcional:
-
-```env
-GEMINI_MODEL=SEU_MODELO
-```
-
-Drive:
-
-```env
-DRIVE_FOLDER_ID=ID_DA_PASTA
-DRIVE_CREDENTIALS_FILE=.secrets/google-drive.json
-```
-
-# Executar
-
-## Chat
-
-```powershell
-python -m streamlit run chat.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
-```
-
-## Interface individual
-
-```powershell
-python -m streamlit run interface.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
-```
-
-## Dashboard de métricas
-
-```powershell
-python -m streamlit run dashboard_metricas.py --server.address=127.0.0.1 --browser.gatherUsageStats=false
-```
-
-## Benchmark de recuperação
-
-```powershell
-python executar_avaliacao.py
-```
-
-## Benchmark controlado de respostas
-
-```powershell
-python avaliar_respostas_controladas.py
-```
-
-## Avaliação real
-
-```powershell
-python avaliar_gemini.py --modo hibrida
-```
-
-# Proteção no Git
-
-O `.gitignore` inclui:
-
-```gitignore
-.env
-venv/
-.venv/
-__pycache__/
-documentos/importado_*.txt
-documentos/drive_*.txt
-.cache_modelos/
-.secrets/
-.estado_drive/
-.avaliacoes/
-```
-
-Isso protege:
-
-```text
-credenciais;
-modelos locais;
-documentos importados;
-documentos sincronizados;
-backups;
-resultados locais de avaliação.
+├── test_dashboard_metricas.py
+└── test_docker_config.py
 ```
 
 # Testes automatizados
@@ -1537,13 +998,7 @@ Execute:
 python -m unittest discover -v
 ```
 
-Após a implementação do dashboard de métricas, a suíte completa executada localmente apresentou:
-
-```text
-Ran 285 tests in 39.298s
-
-OK
-```
+Durante o desenvolvimento, a suíte foi validada localmente e também dentro do container Docker.
 
 Os testes não dependem de:
 
@@ -1554,138 +1009,36 @@ credenciais reais;
 documentos privados.
 ```
 
-# Testes do dashboard
-
-A melhoria inclui:
-
-```text
-test_metricas_dashboard.py
-test_dashboard_metricas.py
-```
-
-Os testes verificam:
-
-```text
-leitura de JSON atual;
-leitura de JSON legado;
-detecção de HTTP 429 histórico;
-separação de falha operacional;
-validação de contagens;
-validação de taxas;
-agregação de arquivos;
-agrupamento por modo;
-seleção da execução mais recente;
-formatação das métricas;
-carregamento do Streamlit;
-filtros por modo;
-filtros por modelo;
-KPIs;
-exibição separada de falhas operacionais;
-comportamento quando não existem avaliações.
-```
-
-# Cobertura da avaliação
-
-Os testes da camada de avaliação incluem:
-
-```text
-Precision;
-Recall;
-Reciprocal Rank;
-MRR;
-termos obrigatórios;
-termos proibidos;
-status esperado;
-documento esperado;
-documento citado;
-citações válidas;
-falhas de qualidade;
-falhas operacionais;
-HTTP 429;
-falhas de conexão;
-resultados controlados;
-salvamento sem chave da API;
-comparação dos três modos;
-dashboard de métricas;
-compatibilidade de resultados históricos.
-```
-
-# Limitações da avaliação
-
-Os 12 casos atuais são uma base pequena e fictícia.
-
-Eles servem para:
-
-```text
-regressão;
-comparação inicial;
-validação da arquitetura;
-demonstração de métricas.
-```
-
-Eles não representam:
-
-```text
-benchmark científico;
-garantia de generalização;
-garantia de precisão em documentos reais;
-garantia de qualidade futura do modelo.
-```
-
-Uma avaliação maior deveria incluir:
-
-```text
-mais documentos;
-mais perguntas;
-perguntas ambíguas;
-perguntas sem resposta;
-documentos conflitantes;
-documentos longos;
-documentos semelhantes;
-casos negativos;
-avaliação repetida em diferentes execuções.
-```
-
 # Privacidade
 
 OCR, importação, buscas e dashboard são locais.
 
 Somente a geração de respostas com Gemini envia os trechos autorizados.
 
-A avaliação real utiliza exclusivamente:
+Arquivos protegidos pelo Git incluem:
 
 ```text
-DOCUMENTOS_AVALIACAO
+.env
+.secrets/
+.estado_drive/
+.avaliacoes/
+.cache_modelos/
+documentos/importado_*.txt
+documentos/drive_*.txt
 ```
 
-definidos em:
-
-```text
-casos_avaliacao.py
-```
-
-Ela não utiliza automaticamente:
-
-```text
-documentos/
-```
-
-A chave da API não é salva nos resultados.
-
-O dashboard apenas lê arquivos locais e não envia os resultados para serviços externos.
+O `.dockerignore` também impede que credenciais e dados locais sejam incorporados à imagem.
 
 # Limitações gerais
 
 O projeto ainda não possui:
 
 ```text
-autenticação de usuários;
+autenticação própria de usuários;
 banco persistente de conversas;
 controle institucional de versões;
 controle de vigência;
 banco vetorial persistente;
-deploy em Docker;
-demonstração online;
 integração com n8n;
 garantia de resposta correta.
 ```
@@ -1703,10 +1056,12 @@ garantia de resposta correta.
 | Busca híbrida | Concluída |
 | Avaliação automática da qualidade | Concluída |
 | Dashboard de métricas | Concluída |
+| Docker | Concluída |
+| Demonstração online | Concluída |
 
 # Próximas melhorias
 
-A ordem atual do desenvolvimento é:
+A ordem atual é:
 
 | Ordem | Melhoria | Situação |
 | --- | --- | --- |
@@ -1715,8 +1070,8 @@ A ordem atual do desenvolvimento é:
 | 3 | Busca híbrida | Concluída |
 | 4 | Avaliação automática da qualidade | Concluída |
 | 5 | Dashboard de métricas | Concluída |
-| 6 | Docker e demonstração online | Próxima etapa |
-| 7 | Integração com n8n e automações | Etapa final |
+| 6 | Docker e demonstração online | Concluída |
+| 7 | Integração com n8n e automações | Próxima etapa |
 
 # Referências
 
@@ -1729,6 +1084,9 @@ A ordem atual do desenvolvimento é:
 - PyMuPDF
 - Reciprocal Rank Fusion
 - Streamlit
+- Streamlit Community Cloud
+- Docker
+- PyTorch
 - Pandas
 - Python `unittest`
 
@@ -1740,4 +1098,10 @@ GitHub:
 
 ```text
 https://github.com/limaavls
+```
+
+Demo:
+
+```text
+https://assistente-procedimentos-victor.streamlit.app/
 ```
