@@ -4,3 +4,6 @@ python-dotenv
 httpx
 pypdf>=5.9
 python-docx>=1.2
+
+-r requirements-semantica.txt
+-r requirements-ocr.txt

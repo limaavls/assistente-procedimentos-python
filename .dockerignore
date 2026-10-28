@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+ENV/
+
+# Credenciais e configuração local
+.env
+.env.*
+.secrets/
+.streamlit/secrets.toml
+
+# Dados locais gerenciados
+.estado_drive/
+.avaliacoes/
+
+# Cache local do modelo.
+# O modelo será baixado novamente dentro da imagem.
+.cache_modelos/
+
+# Documentos importados/sincronizados localmente
+documentos/importado_*.txt
+documentos/drive_*.txt
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários
+*.log
+*.tmp
+*.temp
